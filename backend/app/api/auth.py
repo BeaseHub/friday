@@ -89,25 +89,37 @@ async def signup(
         type="user"
     )
 @router.post("/admin/create-user", response_model=User)
-def create_user_admin(
-    user: UserCreate,
+async def create_user_admin(
+    email: str = Form(...),
+    password: str = Form(...),
+    first_name: str = Form(None),
+    last_name: str = Form(None),
+    phone_number: str = Form(None),
+    profile_picture: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)  # Only admins can access
 ):
     service = UserService(db)
-    db_user = service.get_user_by_email(user.email)
+    db_user = service.get_user_by_email(email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     # Only allow if current user is an admin
     if current_user.type != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
+    profile_picture_path = None
+    if profile_picture:
+        filename = f"{uuid4()}_{profile_picture.filename}"
+        file_location = os.path.join(UPLOAD_DIR, filename)
+        with open(file_location, "wb") as f:
+            f.write(await profile_picture.read())
+        profile_picture_path = f"uploads/{filename}"
     return service.create_user(
-        user.email,
-        user.password,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone_number=user.phone_number,
-        profile_picture_path=user.profile_picture_path,
+        email,
+        password,
+        first_name=first_name,
+        last_name=last_name,
+        phone_number=phone_number,
+        profile_picture_path=profile_picture_path,
         type="admin"
     )
 @router.post("/login")

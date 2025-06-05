@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from app.schemas.message import Message, MessageCreate, MessageUpdate
 from app.services.message_service import MessageService
@@ -6,6 +6,9 @@ from app.services.conversation_service import ConversationService
 from app.db.database import get_db
 from app.schemas.user import User  # Import User schema if needed for authentication
 from app.api.auth import get_current_user  # Import the dependency to get the current user
+
+from uuid import uuid4
+import os
 
 router = APIRouter()
 
@@ -41,23 +44,35 @@ def get_message(
     return message
 
 @router.post("/messages", response_model=Message)
-def create_message(message: MessageCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def create_message(
+    content: str = Form(...),
+    conversation_id: int = Form(...),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     conversation_service = ConversationService(db)
-    # If conversation_id is provided, check ownership
-    conversation_id = getattr(message, "conversation_id", None)
-    if conversation_id:
-        conversation = conversation_service.get_conversation(conversation_id)
-        if not conversation or conversation.user_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Not authorized to add messages to this conversation")
+    conversation = conversation_service.get_conversation(conversation_id)
+    if not conversation or conversation.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to add messages to this conversation")
 
-    # Create the message
+    file_path = None
+    if file:
+        UPLOAD_DIR = "uploads/messages"
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        filename = f"{uuid4()}_{file.filename}"
+        file_location = os.path.join(UPLOAD_DIR, filename)
+        with open(file_location, "wb") as f_out:
+            f_out.write(await file.read())
+        file_path = f"{UPLOAD_DIR}/{filename}"
+
     service = MessageService(db)
     return service.create_message(
         user_id=current_user.id,
-        content=message.content,
-        is_systen=message.is_systen,
-        file_path=message.file_path,
-        conversation_id=getattr(message, "conversation_id", None)
+        content=content,
+        is_systen=False,  # or Form(...) if you want to allow setting this
+        file_path=file_path,
+        conversation_id=conversation_id
     )
 
 @router.put("/messages/{message_id}", response_model=Message)

@@ -130,7 +130,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     token_data = {"sub": user.email, "exp": datetime.utcnow() + timedelta(hours=24)}
     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
-    return {"access_token": token, "token_type": "bearer"}
+    return {"access_token": token, "token_type": "bearer","user": user}
 
 # Logout is handled on the frontend by deleting the JWT token
 

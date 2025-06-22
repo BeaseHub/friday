@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Text, Numeric, JSON, DateTime, ForeignKey, Enum
+from sqlalchemy import Column, Table, Integer, String, Boolean, Text, Numeric, JSON, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
 from app.db.database import Base
 from sqlalchemy.sql import func
@@ -21,6 +21,15 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+
+# Association table for Subscription <-> Agent
+subscription_agents = Table(
+    "subscription_agents",
+    Base.metadata,
+    Column("subscription_id", Integer, ForeignKey("subscriptions.id", ondelete="CASCADE"), primary_key=True),
+    Column("agent_id", Integer, ForeignKey("agents.id", ondelete="CASCADE"), primary_key=True)
+)
+
 class Agent(Base):
     __tablename__ = "agents"
 
@@ -33,6 +42,13 @@ class Agent(Base):
     image_path = Column(String(255))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+    subscriptions = relationship(
+        "Subscription",
+        secondary=subscription_agents,
+        back_populates="agents"
+    )
 
 
 class Plan(Base):
@@ -91,6 +107,13 @@ class Subscription(Base):
     user = relationship("User", backref="subscriptions", passive_deletes=True)
     plan = relationship("Plan", backref="subscriptions")
     payments = relationship("Payment", back_populates="subscription", cascade="all, delete-orphan")
+
+    # Add this relationship:
+    agents = relationship(
+        "Agent",
+        secondary=subscription_agents,
+        back_populates="subscriptions"
+    )
 
 class Payment(Base):
     __tablename__ = "payments"

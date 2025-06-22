@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from app.schemas.agent import Agent  # Import Agent schema for nested agents
 
 class SubscriptionStatus(str, Enum):
     active = "active"
@@ -16,7 +17,7 @@ class SubscriptionBase(BaseModel):
     status: Optional[SubscriptionStatus] = SubscriptionStatus.active
 
 class SubscriptionCreate(SubscriptionBase):
-    pass
+    agent_ids: List[int]
 
 class SubscriptionUpdate(BaseModel):
     plan_id: Optional[int] = None
@@ -29,6 +30,7 @@ class Subscription(SubscriptionBase):
     user_id: int  # Only in the response model
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    agents: List[Agent] = []
 
     class Config:
         orm_mode = True

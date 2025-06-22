@@ -24,6 +24,7 @@ class UserUpdate(BaseModel):
 class ChangePassword(BaseModel):
     old_password: str
     new_password: str  # New password for changing the existing one
+    email: Optional[str] = None  # optional if needed
 
 class User(UserBase):
     id: int

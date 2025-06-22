@@ -137,18 +137,17 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @router.post("/change-password")
 def change_password(
     change: ChangePassword,
-    email: str = Body(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     service = UserService(db)
     # If admin and email is provided, change that user's password
-    if current_user.type == "admin" and email:
-        user = service.get_user_by_email(email)
+    if current_user.type == "admin" and change.email:
+        user = service.get_user_by_email(change.email)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         service.change_password(user, change.new_password)
-        return {"msg": f"Password updated for {email}"}
+        return {"msg": f"Password updated for {change.email}"}
     else:
         user = service.get_user_by_email(current_user.email)
         if not user or not service.authenticate_user(current_user.email, change.old_password):

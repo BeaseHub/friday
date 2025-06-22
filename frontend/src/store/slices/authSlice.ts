@@ -9,6 +9,8 @@ interface User {
   phoneNumber: string;
   profilePic?: string;
   initials: string;
+  token: string;
+  role: 'user' | 'admin';
 }
 
 interface AuthState {

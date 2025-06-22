@@ -4,7 +4,7 @@ import { Bell, User, Globe } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { logout } from '@/store/slices/authSlice';
 import { setLanguage } from '@/store/slices/languageSlice';
-import { clearSelectedAgents } from '@/store/slices/subscriptionSlice';
+import { clearAgents } from '@/store/slices/agentSlice';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,9 +22,10 @@ const Header = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'update' | 'changePassword'>('login');
 
-  const handleAuthClick = (mode: 'login' | 'signup') => {
+
+  const handleAuthClick = (mode: 'login' | 'signup' | 'update' | 'changePassword') => {
     setAuthMode(mode);
     setAuthModalOpen(true);
   };
@@ -32,7 +33,7 @@ const Header = () => {
   const handleLogout = () => {
     // Clear user data and selected agents on logout
     dispatch(logout());
-    dispatch(clearSelectedAgents());
+    dispatch(clearAgents());
   };
 
   const handleSubscriptionsClick = () => {
@@ -113,19 +114,19 @@ const Header = () => {
                   </div>
                   <DropdownMenuSeparator className="bg-gray-200" />
                   <DropdownMenuItem 
-                    onClick={handleSubscriptionsClick}
+                    onClick={() => handleAuthClick('update')}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
                     {"Update information"}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={handleSubscriptionsClick}
+                    onClick={() => handleAuthClick('changePassword')}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
                     {"Change password"}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    // onClick={handleSubscriptionsClick}
+                    onClick={handleSubscriptionsClick}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
                     {t.subscriptions}

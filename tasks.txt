@@ -1,7 +1,5 @@
--add all the necessary information (first name, last name, email, phone number, profile pic)for the user sign up, with the email , the password being mandatory(both password should match)
--the user authentication should be stored in the redux instead of the context,maybe
- store it in the local storage 
-- clear the local storage or the redux state when the user logs out
+
+agents are fetched, but rea;ltion need to be made
 - the language of choice should be stored in the local storage 
 - The subscriptions should lead to the assistant page with all the user agents preselected grayed out with the mark available.
 At this stage the user is able to select more agents and pay for them .

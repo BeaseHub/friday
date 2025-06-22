@@ -1,69 +1,60 @@
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Agent } from '../slices/agentSlice';
 
-interface ActivePlan {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-  isActive: boolean;
-  subscriptionEnd?: string;
+export interface Subscription {
+  id: number;
+  user_id: number;
+  plan_id: number;
+  status: string;
+  started_at?: string;
+  expire_at?: string;
+  created_at?: string;
+  updated_at?: string;
+  agents?: Agent[];
 }
 
 interface SubscriptionState {
-  selectedAgents: string[];
-  activePlans: ActivePlan[];
-  subscribed: boolean;
+  subscriptions: Subscription[];
+  activeSubscription: Subscription | null;
 }
 
 const initialState: SubscriptionState = {
-  selectedAgents: [],
-  activePlans: [],
-  subscribed: false,
+  subscriptions: [],
+  activeSubscription: null,
 };
 
 const subscriptionSlice = createSlice({
-  name: 'subscription',
+  name: 'subscriptions',
   initialState,
   reducers: {
-    addAgent: (state, action: PayloadAction<string>) => {
-      if (!state.selectedAgents.includes(action.payload)) {
-        state.selectedAgents.push(action.payload);
-      }
+    setSubscriptions: (state, action: PayloadAction<Subscription[]>) => {
+      state.subscriptions = action.payload;
     },
-    removeAgent: (state, action: PayloadAction<string>) => {
-      state.selectedAgents = state.selectedAgents.filter(id => id !== action.payload);
+    setActiveSubscription: (state, action: PayloadAction<Subscription | null>) => {
+      state.activeSubscription = action.payload;
     },
-    clearSelectedAgents: (state) => {
-      state.selectedAgents = [];
+    removeActiveSubscription: (state) => {
+      state.activeSubscription = null;
     },
-    setActivePlans: (state, action: PayloadAction<ActivePlan[]>) => {
-      state.activePlans = action.payload;
+    addSubscription: (state, action: PayloadAction<Subscription>) => {
+      state.subscriptions.push(action.payload);
     },
-    addActivePlan: (state, action: PayloadAction<ActivePlan>) => {
-      const existingIndex = state.activePlans.findIndex(plan => plan.id === action.payload.id);
-      if (existingIndex >= 0) {
-        state.activePlans[existingIndex] = action.payload;
-      } else {
-        state.activePlans.push(action.payload);
-      }
+    removeSubscription: (state, action: PayloadAction<number>) => {
+      state.subscriptions = state.subscriptions.filter(sub => sub.id !== action.payload);
     },
-    removeActivePlan: (state, action: PayloadAction<string>) => {
-      state.activePlans = state.activePlans.filter(plan => plan.id !== action.payload);
-    },
-    setSubscribed: (state, action: PayloadAction<boolean>) => {
-      state.subscribed = action.payload;
+    clearSubscriptions: (state) => {
+      state.subscriptions = [];
+      state.activeSubscription = null;
     },
   },
 });
 
-export const { 
-  addAgent, 
-  removeAgent, 
-  clearSelectedAgents, 
-  setActivePlans, 
-  addActivePlan, 
-  removeActivePlan, 
-  setSubscribed 
+export const {
+  setSubscriptions,
+  setActiveSubscription,
+  removeActiveSubscription,
+  addSubscription,
+  removeSubscription,
+  clearSubscriptions
 } = subscriptionSlice.actions;
 export default subscriptionSlice.reducer;

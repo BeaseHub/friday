@@ -1,80 +1,93 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, act } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Plus, Minus, ShoppingCart, ArrowLeft, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
-import { addAgent, removeAgent } from '@/store/slices/subscriptionSlice';
+import { setPlans,setSelectedPlan,clearPlans } from '@/store/slices/planSlice';
+import { setAgents, setFilteredAgents, setSelectedAgents,addSelectedAgent, removeSelectedAgent, clearAgents } from '@/store/slices/agentSlice';
+import {
+  setSubscriptions,
+  setActiveSubscription,
+  removeActiveSubscription,
+  addSubscription,
+  removeSubscription,
+  clearSubscriptions
+}  from '@/store/slices/subscriptionSlice';
+import { getActiveAgents,getAgentById } from '@/api/agentApi';
+import { getActivePlans } from '@/api/planApi';
+import { getActiveSubscriptionsByUser } from '@/api/subscription';
 
-const agents = [
-  {
-    id: '1',
-    name: 'Productivity Pro',
-    price: 8,
-    description: 'Your personal assistant for organization and efficiency',
-    keyFeature: 'Smart task prioritization',
-    category: 'Productivity',
-    features: ['Calendar integration', 'Automated reminders', '+3 more features'],
-    languages: ['English', 'Spanish', 'French', '+2 more']
-  },
-  {
-    id: '2',
-    name: 'Creative Canvas',
-    price: 12,
-    description: 'Unleash your creativity with AI-powered inspiration',
-    keyFeature: 'Idea generation',
-    category: 'Creativity',
-    features: ['Style exploration', 'Reference collection', '+3 more features'],
-    languages: ['English', 'Spanish', 'French', '+2 more']
-  },
-  {
-    id: '3',
-    name: 'Finance Advisor',
-    price: 15,
-    description: 'Smart financial insights and budgeting recommendations',
-    keyFeature: 'Real-time reporting',
-    category: 'Finance',
-    features: ['Budget analysis', 'Investment advice', '+3 more features'],
-    languages: ['English', 'Spanish', 'French', '+2 more']
-  },
-  {
-    id: '4',
-    name: 'Learning Companion',
-    price: 10,
-    description: 'Personalized learning and educational support',
-    keyFeature: 'Adaptive learning paths',
-    category: 'Education',
-    features: ['Progress tracking', 'Custom curricula', '+3 more features'],
-    languages: ['English', 'Spanish', 'French', '+2 more']
-  }
-];
+
 
 const ExploreAgents = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isSubscriptionView = searchParams.get('subscription') === 'true';
-  const { selectedAgents, activePlans } = useAppSelector((state) => state.subscription);
+  const {plans,selectedPlan} = useAppSelector((state) => state.plan);
+  const { agents,filteredAgents, selectedAgents} = useAppSelector((state) => state.agent);  
   const { currentLanguage } = useAppSelector((state) => state.language);
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredAgents = agents.filter(agent =>
-    agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const [loading, setLoading] = useState(true);
 
-  const selectedAgentDetails = agents.filter(agent => selectedAgents.includes(agent.id));
-  const totalPrice = selectedAgentDetails.reduce((sum, agent) => sum + agent.price, 0);
+  useEffect(() => {
+    const fetchAgents = async () => {
+      setLoading(true);
+      try {
+        const plans= await getActivePlans();
+        dispatch(setPlans(plans || []));
+        dispatch(setSelectedPlan(plans[0] || null));
+
+        const agents = await getActiveAgents();
+        dispatch(setAgents(agents || []));
+
+        //setselectedagents based on the agents in the subscriptions if the user is connected
+        const auth = localStorage.getItem('auth');
+        if (!auth) return {};
+        const token = JSON.parse(auth)?.user?.token;
+        const activeSubscriptions  = await getActiveSubscriptionsByUser();
+        const activeSubscription = activeSubscriptions ?.[0] || null;
+
+        dispatch(setActiveSubscription(activeSubscription));
+        console.log('Active subscription:', activeSubscription);
+        dispatch(setSelectedAgents(activeSubscription?.agents || [] ));
+      } catch (error) {
+        // Optionally handle error (toast, etc.)
+        dispatch(setAgents([]));
+        dispatch(setFilteredAgents([]));
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAgents();
+  }, []);
+
+  useEffect(() => {
+    const filtered = agents.filter(agent =>
+      agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      agent.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    dispatch(setFilteredAgents(filtered));
+  }, [searchTerm, agents, dispatch]);
+
+  const totalPrice = selectedAgents.reduce((sum, agent) => sum + agent.price, 0);
 
   const toggleAgent = (agentId: string) => {
-    if (selectedAgents.includes(agentId)) {
-      dispatch(removeAgent(agentId));
+    const isSelected = selectedAgents.some(agent => agent.id === agentId)
+    if (isSelected) {
+      dispatch(removeSelectedAgent(agentId));
     } else {
-      dispatch(addAgent(agentId));
+      // You must have access to the full agent object here
+      const agent = agents.find(a => a.id === agentId);
+      if (agent) {
+        dispatch(addSelectedAgent(agent));
+      }
     }
+    
   };
 
   const handleProceed = () => {
@@ -84,7 +97,7 @@ const ExploreAgents = () => {
   };
 
   const isAgentActive = (agentId: string) => {
-    return activePlans.some(plan => plan.id === agentId && plan.isActive);
+    return agents.some(agent => agent.id === agentId && agent.is_active);
   };
 
   const translations = {
@@ -164,9 +177,9 @@ const ExploreAgents = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {filteredAgents.map((agent) => {
-            const isSelected = selectedAgents.includes(agent.id);
+            const isSelected = selectedAgents.some(a=> a.id === agent.id);
             const isActive = isAgentActive(agent.id);
-            const isDisabled = isSubscriptionView && isActive;
+            const isDisabled = false;
             
             return (
               <Card key={agent.id} className={`bg-white border transition-all duration-300 ${
@@ -177,18 +190,16 @@ const ExploreAgents = () => {
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        agent.category === 'Productivity' ? 'bg-blue-100' :
-                        agent.category === 'Creativity' ? 'bg-purple-100' :
-                        agent.category === 'Finance' ? 'bg-green-100' :
-                        'bg-gray-100'
-                      }`}>
-                        <div className={`w-6 h-6 rounded-full ${
-                          agent.category === 'Productivity' ? 'bg-blue-500' :
-                          agent.category === 'Creativity' ? 'bg-purple-500' :
-                          agent.category === 'Finance' ? 'bg-green-500' :
-                          'bg-gray-500'
-                        }`}></div>
+                      <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100">
+                        {agent.image_path ? (
+                          <img
+                            src={agent.image_path}
+                            alt={agent.name}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gray-400"></div>
+                        )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -199,7 +210,6 @@ const ExploreAgents = () => {
                             </span>
                           )}
                         </div>
-                        <div className="text-sm text-orange-600 font-medium">{agent.category}</div>
                       </div>
                     </div>
                     <div className="text-right">
@@ -232,7 +242,7 @@ const ExploreAgents = () => {
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2">Key Features:</h4>
                       <div className="flex flex-wrap gap-1">
-                        {agent.features.map((feature, index) => (
+                        {agent.feature_list.map((feature, index) => (
                           <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
                             ⭐ {feature}
                           </span>
@@ -240,7 +250,7 @@ const ExploreAgents = () => {
                       </div>
                     </div>
                     
-                    <div>
+                    {/* <div>
                       <span className="text-sm text-gray-600">Languages supported: </span>
                       <div className="flex flex-wrap gap-1 mt-1">
                         {agent.languages.map((lang, index) => (
@@ -249,12 +259,12 @@ const ExploreAgents = () => {
                           </span>
                         ))}
                       </div>
-                    </div>
+                    </div> */}
                   </div>
                   
-                  <div className="mt-4 p-3 bg-orange-50 rounded-lg">
+                  {/* <div className="mt-4 p-3 bg-orange-50 rounded-lg">
                     <p className="text-orange-700 text-sm font-medium">✨ {agent.keyFeature}</p>
-                  </div>
+                  </div> */}
                 </CardContent>
               </Card>
             );
@@ -279,14 +289,14 @@ const ExploreAgents = () => {
               
               <div className="flex gap-3">
                 <div className="hidden sm:flex flex-wrap gap-2 max-w-md">
-                  {selectedAgentDetails.slice(0, 2).map((agent) => (
+                  {selectedAgents.slice(0, 2).map((agent) => (
                     <span key={agent.id} className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm">
                       {agent.name}
                     </span>
                   ))}
-                  {selectedAgentDetails.length > 2 && (
+                  {selectedAgents.length > 2 && (
                     <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm">
-                      +{selectedAgentDetails.length - 2} more
+                      +{selectedAgents.length - 2} more
                     </span>
                   )}
                 </div>

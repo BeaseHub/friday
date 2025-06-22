@@ -13,23 +13,23 @@ const handleApiError = (error: any) => {
   throw { status: 500, message: 'Unknown error' };
 };
 
-// Get all active plans
-export const getActivePlans = async () => {
+// Get all active agents
+export const getActiveAgents = async () => {
   try {
-    const res = await axios.get(`${API_URL}/plans/active`);
-    console.log('Active plans response:', res);
-    return res.data; // returns an array of plans
+    const res = await axios.get(`${API_URL}/agents/active`);
+    console.log('Active agents response:', res);
+    return res.data; // returns an array of agents
   } catch (error) {
     handleApiError(error);
   }
 };
 
-// Get a plan by ID
-export const getPlanById = async (planId: number | string) => {
+// Get a agent by ID
+export const getAgentById = async (agentId: number | string) => {
   try {
-    const res = await axios.get(`${API_URL}/plans/${planId}`);
-    console.log('Plan by ID response:', res);
-    return res.data; // returns a single plan object
+    const res = await axios.get(`${API_URL}/agents/${agentId}`);
+    console.log('agent by ID response:', res);
+    return res.data; // returns a single agent object
   } catch (error) {
     handleApiError(error);
   }

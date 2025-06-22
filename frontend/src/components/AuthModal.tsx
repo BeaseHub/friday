@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,16 +7,27 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAppDispatch } from '@/hooks/useRedux';
 import { login } from '@/store/slices/authSlice';
-import { signup, login as loginApi } from '@/api/authApi';
+import { signup, updateProfile, changePassword, login as loginApi } from '@/api/authApi';
 
 interface AuthModalProps {
   open: boolean;
   onClose: () => void;
-  mode: 'login' | 'signup';
+  mode: 'login' | 'signup' | 'update' | 'changePassword';
   onToggleMode: () => void;
 }
 
 const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
+  //Gt the user data from the locAL storage
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem('auth') || '{}').user || {};
+    } catch {
+      return {};
+    }
+  })();
+
+  const token=user?.token || '';
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -24,8 +35,28 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    profilePic: ''
+    profilePic: '',
   });
+
+  useEffect(() => {
+    if (mode === 'update' && user && !formData.firstName) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phoneNumber: user.phoneNumber || '',
+        profilePic: user.profilePic || '',
+      }));
+    } else if (mode === 'changePassword' && user && !formData.email) {
+      setFormData((prev) => ({
+        ...prev,
+        email: user.email || '',
+      }));
+    }
+  }, [mode, user]);
+
+  // State to manage loading state
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
   const { toast } = useToast();
@@ -70,7 +101,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
       return false;
     }
     
-    if (!formData.password.trim()) {
+    if (mode !== "update" && !formData.password.trim()) {
       toast({ title: "Error", description: "Password is required", variant: "destructive" });
       return false;
     }
@@ -154,26 +185,101 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
   try {
     if (mode === 'login') {
       // Call login API
-      const data = await loginApi(formData.email, formData.password);
-      const user = data.user; // Assuming the API returns user data
-      // Save token, update Redux, etc.
-      dispatch(
-        login({
-          id: String(user.id),
-          firstName: user.first_name,
-          lastName: user.last_name,
-          email: user.email,
-          phoneNumber: user.phone_number,
-          profilePic: user.profile_picture_path ?? '',
-          initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
-          token: data.access_token, // if your slice or storage uses it
-        })
-      );
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
-      onClose();
+      const result = await loginApi(formData.email, formData.password);
+      console.log(result);
+      const user = result.data.user; // Assuming the API returns user data
+      if(result.status == 200 ||  result.statusText === 'OK') {
+        // Save token, update Redux, etc.
+        dispatch(
+          login({
+            id: String(user.id),
+            firstName: user.first_name,
+            lastName: user.last_name,
+            email: user.email,
+            phoneNumber: user.phone_number,
+            profilePic: user.profile_picture_path ?? '',
+            initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
+            role: user.type,
+            token: result.data.access_token, // if your slice or storage uses it
+          })
+        );
+              // Show success toast
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        });
+        onClose();
+      }
+    } else if (mode === 'update') {
+      // Prepare FormData for profile update
+      const form = new FormData();
+      form.append('first_name', formData.firstName);
+      form.append('last_name', formData.lastName);
+      form.append('phone_number', formData.phoneNumber);
+      if (formData.profilePic && typeof formData.profilePic !== 'string') {
+        form.append('profile_picture', formData.profilePic);
+      }
+      // Optionally: form.append('is_active', formData.isActive);
+
+      // Call updateProfile API (make sure to pass the token)
+      const result = await updateProfile(form, token);
+
+      if (result.status === 200 || result.statusText === 'OK') {
+        const user = result.data; // Assuming the API returns user data
+        // Save token, update Redux, etc.
+        dispatch(
+          login({
+            id: String(user.id),
+            firstName: user.first_name,
+            lastName: user.last_name,
+            email: user.email,
+            phoneNumber: user.phone_number,
+            profilePic: user.profile_picture_path ?? '',
+            initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
+            role: user.type,
+            token: result.data.access_token, // if your slice or storage uses it
+          })
+        );
+        // Show success toast
+        toast({
+          title: "Profile updated!",
+          description: "Your profile information has been updated.",
+        });
+        // Optionally update Redux/localStorage with new user info
+        onClose();
+      } else {
+        toast({
+          title: "Update failed",
+          description: "Please check your inputs and try again.",
+          variant: "destructive",
+        });
+      }
+    } else if (mode === 'changePassword') {
+      // Prepare payload for password change
+      const payload = {
+        old_password: formData.password,      // or formData.oldPassword if you use that field
+        new_password: formData.confirmPassword, // or formData.newPassword if you use that field
+        email: user.email
+      };
+
+      console.log(payload, token);
+      // Call changePassword API (make sure to pass the token if required)
+      const result = await changePassword(payload, token);
+      console.log(result);
+
+      if (result?.status === 200 || result?.statusText=== 'OK') {
+        toast({
+          title: "Password changed!",
+          description: "Your password has been updated.",
+        });
+        onClose();
+      } else {
+        toast({
+          title: "Password change failed",
+          description: "Please check your inputs and try again.",
+          variant: "destructive",
+        });
+      }
     } else {
       // Prepare FormData for signup
       const form = new FormData();
@@ -239,7 +345,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
         
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">
-            {mode === 'login' ? 'Welcome Back' : 'Create Account'}
+            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : mode === 'update' ? 'Update Profile' : 'Change Password'}
           </h2>
           <p className="text-friday-orange">
             {mode === 'login' 
@@ -250,7 +356,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === 'signup' && (
+          {(mode === 'signup' || mode === 'update') && (
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -323,21 +429,26 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
             />
           </div>
           
-          <div>
-            <Label htmlFor="password" className="text-white">Password *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
-              className="bg-friday-black border-friday-black-lighter text-white mt-1"
-              required
-            />
-          </div>
+          {mode!=="update" && 
+            (<div>
+              <Label htmlFor="password" className="text-white">
+                {mode === "changePassword" ? "Old Password *" : "Password *"}
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                className="bg-friday-black border-friday-black-lighter text-white mt-1"
+                required
+              />
+            </div>)}
           
-          {mode === 'signup' && (
+          {(mode === 'signup'|| mode ==="changePassword") && (
             <div>
-              <Label htmlFor="confirmPassword" className="text-white">Confirm Password *</Label>
+              <Label htmlFor="confirmPassword" className="text-white">
+                {mode === "changePassword" ? "New Password *" : " Confirm Password *"}
+              </Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -354,7 +465,18 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
             disabled={loading}
             className="w-full bg-friday-orange hover:bg-friday-orange-light text-white"
           >
-            {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
+            {loading
+              ? 'Please wait...'
+              : mode === 'login'
+                ? 'Sign In'
+                : mode === 'signup'
+                  ? 'Create Account'
+                  : mode === 'update'
+                    ? 'Update Profile'
+                    : mode === 'changePassword'
+                      ? 'Change Password'
+                      : 'Submit'
+            }
           </Button>
         </form>
         

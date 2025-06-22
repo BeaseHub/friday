@@ -6,68 +6,27 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Header from '@/components/Header';
 import { useAppSelector, useAppDispatch } from '@/hooks/useRedux';
-import { clearSelectedAgents } from '@/store/slices/subscriptionSlice';
+import { clearAgents } from '@/store/slices/agentSlice';
 import AuthModal from '@/components/AuthModal';
 import { useToast } from '@/hooks/use-toast';
+import {createSubscription} from '@/api/subscription';
 
-const agents = [
-  {
-    id: '1',
-    name: 'CodeMaster Pro',
-    price: 29,
-    description: 'Expert en développement, debugging et optimisation de code',
-    features: ['Support 15+ langages', 'Code review automatique', 'Debugging intelligent', 'Templates de code']
-  },
-  {
-    id: '2',
-    name: 'Marketing Genius',
-    price: 39,
-    description: 'Stratégies marketing, création de contenu et analyse ROI',
-    features: ['Templates créatifs', 'Analyse ROI', 'Campagnes automatisées', 'A/B testing']
-  },
-  {
-    id: '3',
-    name: 'Data Analyst AI',
-    price: 49,
-    description: 'Analyse de données, visualisations et insights business',
-    features: ['Intégrations multiples', 'Visualisations avancées', 'Rapports automatiques', 'Prédictions ML']
-  },
-  {
-    id: '4',
-    name: 'Content Creator',
-    price: 24,
-    description: 'Rédaction, copywriting et création de contenu engageant',
-    features: ['SEO optimisé', 'Ton de voix personnalisé', 'Formats multiples', 'Plagiarism check']
-  },
-  {
-    id: '5',
-    name: 'Customer Support',
-    price: 34,
-    description: 'Réponses automatisées et gestion relation client 24/7',
-    features: ['Support multilingue', 'Escalade intelligente', 'Base de connaissances', 'Analytics détaillées']
-  },
-  {
-    id: '6',
-    name: 'Financial Advisor',
-    price: 54,
-    description: 'Analyse financière, budgets et recommandations investissement',
-    features: ['Rapports temps réel', 'Alertes automatiques', 'Conformité réglementaire', 'Prévisions financières']
-  }
-];
 
 const Summary = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const { selectedAgents } = useAppSelector((state) => state.subscription);
+  const { selectedAgents } = useAppSelector((state) => state.agent);
+  const {selectedPlan} = useAppSelector((state) => state.plan);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
-  const selectedAgentDetails = agents.filter(agent => selectedAgents.includes(agent.id));
-  const totalPrice = selectedAgentDetails.reduce((sum, agent) => sum + agent.price, 0);
+  const totalPrice = selectedAgents.reduce((sum, agent) => sum + agent.price, 0);
 
+
+  
   const handlePayment = async () => {
     if (!isAuthenticated) {
       setAuthMode('login');
@@ -79,14 +38,33 @@ const Summary = () => {
     
     // Simulate payment processing
     await new Promise(resolve => setTimeout(resolve, 2000));
+
+    try {
+      // Call API to create subscription
+      const result= await createSubscription({
+        plan_id: Number(selectedPlan.id),
+        agent_ids: selectedAgents.map(agent => Number(agent.id))
+      });
+      
+    } catch (error) {
+      console.error("Payment failed:", error);
+      toast({
+        title: "Erreur de paiement",
+        description: "Une erreur est survenue lors du traitement de votre paiement. Veuillez réessayer.",
+        variant: 'destructive',
+      });
+      setProcessing(false);
+      return;
+    }
     
     toast({
       title: "Paiement réussi!",
       description: "Vos agents IA ont été activés. Bienvenue dans votre workspace!",
     });
     
-    dispatch(clearSelectedAgents());
+    dispatch(clearAgents());
     navigate('/workspace');
+    // After payment, user navigate to a new page, so the component unmounts and the state is reset.
   };
 
   const handleAuthSuccess = () => {
@@ -139,7 +117,7 @@ const Summary = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Selected Agents */}
             <div className="lg:col-span-2 space-y-4">
-              {selectedAgentDetails.map((agent) => (
+              {selectedAgents.map((agent) => (
                 <Card key={agent.id} className="bg-white/10 backdrop-blur-sm border-white/20">
                   <CardHeader>
                     <div className="flex justify-between items-start">
@@ -156,7 +134,7 @@ const Summary = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {agent.features.map((feature, index) => (
+                      {agent.feature_list.map((feature, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-white" />
                           <span className="text-white/80 text-sm">{feature}</span>
@@ -176,7 +154,7 @@ const Summary = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    {selectedAgentDetails.map((agent) => (
+                    {selectedAgents.map((agent) => (
                       <div key={agent.id} className="flex justify-between items-center">
                         <span className="text-white/80">{agent.name}</span>
                         <span className="text-white">{agent.price}€</span>
@@ -191,24 +169,17 @@ const Summary = () => {
                     </div>
                   </div>
                   
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-white" />
-                      <span className="text-white/80 text-sm">Accès illimité 24/7</span>
+                  {selectedPlan && selectedPlan.feature_list && selectedPlan.feature_list.length > 0 && (
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 space-y-2 mb-4">
+                      <div className="font-semibold text-white mb-2">Fonctionnalités du plan :</div>
+                      {selectedPlan.feature_list.map((feature: string, idx: number) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <Check className="w-4 h-4 text-white" />
+                          <span className="text-white/80 text-sm">{feature}</span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-white" />
-                      <span className="text-white/80 text-sm">Support technique inclus</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-white" />
-                      <span className="text-white/80 text-sm">Mises à jour automatiques</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-white" />
-                      <span className="text-white/80 text-sm">Annulation à tout moment</span>
-                    </div>
-                  </div>
+                  )}
                   
                   <Button
                     onClick={handlePayment}

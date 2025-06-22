@@ -50,8 +50,8 @@ export const login = async (email: string, password: string) => {
     const res = await axios.post(`${API_URL}/login`, data, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
-    console.log('Login response:', res.data);
-    return res.data;
+    console.log('Login response:', res);
+    return res;
   } catch (error) {
     handleApiError(error);
   }
@@ -60,21 +60,39 @@ export const login = async (email: string, password: string) => {
 // Update profile
 export const updateProfile = async (formData: FormData, token: string) => {
   try {
+    console.log(token);
     const res = await axios.patch(`${API_URL}/update-profile`, formData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'multipart/form-data',
       },
     });
-    return res.data;
+    console.log('Update profile response:', res);
+    return res;
   } catch (error) {
     handleApiError(error);
   }
 };
 
-// Example usage in a component:
-// try {
-//   await signup(formData);
-// } catch (err) {
-//   alert(err.message); // or use err.status for custom handling
-// }
+//Change user password
+export const changePassword = async (
+  payload: { old_password: string; new_password: string; email?: string },
+  token: string
+) => {
+  try {
+    const res = await axios.post(
+      `${API_URL}/change-password`,
+      payload,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return res;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};

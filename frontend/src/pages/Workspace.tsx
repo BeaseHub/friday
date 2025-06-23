@@ -1,80 +1,142 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Mic, User, Bot, Settings, ArrowLeft, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAppSelector } from '@/hooks/useRedux';
+import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { useNavigate } from 'react-router-dom';
+import { getConversationsByUser,createMessage } from '@/api/chatApi';
+import { setConversations,setSelectedConversation,addMessageToConversation,setLoading,clearChat } from '@/store/slices/chatSlice';
+import { setAgents } from '@/store/slices/agentSlice';
+import { getActiveAgents } from '@/api/agentApi';
+import { format } from 'date-fns';
+import { io, Socket } from 'socket.io-client';
 
-const mockAgents = [
-  { id: '1', name: 'Productivity Pro', category: 'Productivity', active: true },
-  { id: '2', name: 'Creative Canvas', category: 'Creativity', active: true },
-  { id: '3', name: 'Finance Advisor', category: 'Finance', active: false },
-];
 
-const mockConversations = [
-  { 
-    id: '1', 
-    title: 'Weekly productivity planning', 
-    agent: 'Productivity Pro',
-    timestamp: '2h ago',
-    preview: 'How can I optimize my workflow...'
-  },
-  { 
-    id: '2', 
-    title: 'Creative project ideas', 
-    agent: 'Creative Canvas',
-    timestamp: '1d ago',
-    preview: 'I need some inspiration for...'
-  },
-  { 
-    id: '3', 
-    title: 'Budget analysis', 
-    agent: 'Finance Advisor',
-    timestamp: '3d ago',
-    preview: 'Please review my monthly...'
-  },
-];
 
 const Workspace = () => {
   const [message, setMessage] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [selectedAgent, setSelectedAgent] = useState('Creative Canvas');
   const [recording, setRecording] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { conversations, selectedConversation } = useAppSelector((state) => state.chat);
+  const { agents,filteredAgents, selectedAgents} = useAppSelector((state) => state.agent);  
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const messages = [
-  {
-    sender: 'user',
-    content: 'Hey there!',
-  },
-  {
-    sender: 'system',
-    content: 'Hello! How can I assist you today?',
-  },
-  {
-    sender: 'user',
-    content: 'Can you tell me a joke?',
-  },
-  {
-    sender: 'system',
-    content: 'Sure! Why don’t scientists trust atoms? Because they make up everything!',
-  },
-];
+  const [messages, setMessages] = useState<
+    { sender: string; content: string; file?: File | null, sentAt:string }[]
+  >([]);
 
+  const socketRef = useRef<Socket | null>(null);
+
+  const getAuthUserAndToken = () => {
+    const auth = localStorage.getItem('auth');
+    if (!auth) return { userId: null, token: null };
+    try {
+      const parsed = JSON.parse(auth);
+      const userId = parsed?.user?.id ?? null;
+      const token = parsed?.user?.token ?? null;
+      const initials = parsed?.user?.initials ?? null;
+      const fullName = parsed?.user?.firstName +" " + parsed?.user?.lastName;
+      return { userId, token, fullName, initials };
+    } catch {
+      return { userId: null, token: null,fullName: null, initials: null};
+    }
+  };
+  useEffect(() => {
+    const fetchConversations = async () => {
+      try {
+        const { userId, token } = getAuthUserAndToken();
+        if (!userId || !token) {
+          // Handle unauthenticated state
+        }
+        const conversations = await getConversationsByUser(userId, token);
+        console.log('Fetched conversations:', conversations);
+        dispatch(setConversations(conversations));
+      } catch (error) {
+        console.error('Error fetching conversations:', error);
+      }
+    };
+
+    const fetchAgents = async () => {
+          setLoading(true);
+          try {
+            // Fetch active agents from the API
+            const agents = await getActiveAgents();
+            dispatch(setAgents(agents || []));
+  
+          } catch (error) {
+            // Optionally handle error (toast, etc.)
+            dispatch(setAgents([]));
+          } finally {
+            setLoading(false);
+          }
+      };
+
+    fetchAgents();
+    fetchConversations();
+  }, []);
+
+  useEffect(() => {
+    const { token } = getAuthUserAndToken();
+    if (!token) return;
+
+    // Connect to Socket.IO server
+    socketRef.current = io(import.meta.env.VITE_API_URL, {
+      auth: { token }
+    });
+
+    // Listen for new messages
+    socketRef.current.on('new_message', (message) => {
+      dispatch(addMessageToConversation({
+        conversationId: message.conversation_id,
+        message,
+      }));
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socketRef.current?.disconnect();
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  //update the messages in the view when a new conversation is selected
+  useEffect(() => {
+    if (selectedConversation) {
+      setMessages(selectedConversation.messages.map(msg => ({
+        sender: msg.is_systen ? 'system' : selectedConversation.user_id === getAuthUserAndToken().userId ? 'user' : 'Unknonwn',
+        content: msg.content,
+        file: msg.file_path ? new File([], msg.file_path) : null,
+        sentAt: format(new Date(msg.sent_at), 'yyyy-MM-dd HH:mm:ss')
+      })));
+    }
+  }, [selectedConversation]);
 
   if (!isAuthenticated) {
     navigate('/');
     return null;
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (message.trim()) {
-      console.log('Sending message:', message);
-      setMessage('');
+      const { userId, token } = getAuthUserAndToken();
+      // You need to know the current conversation ID; replace `currentConversationId` accordingly
+      const currentConversationId = selectedConversation?.id; // <-- Replace with actual selected conversation ID
+
+      try {
+        await createMessage(message, currentConversationId, token);
+        // Optionally: refresh messages or update UI here
+        setMessage('');
+      } catch (error) {
+        console.error('Error sending message:', error);
+        // Optionally: show a toast or error message to the user
+      }
     }
   };
 
@@ -140,53 +202,37 @@ const Workspace = () => {
               <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                 isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-orange-100 border border-orange-200'
               }`}>
-                <span className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-orange-600'}`}>J</span>
+                <span className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-orange-600'}`}>{getAuthUserAndToken().initials}</span>
               </div>
               <div>
-                <div className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>John Doe</div>
-                <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Premium Plan</div>
+                <div className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{getAuthUserAndToken().fullName}</div>
+                
               </div>
             </div>
           </div>
 
           {/* AI Assistants */}
           <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Your AI Assistants</h3>
-            <div className="space-y-2">
-              {mockAgents.map((agent) => (
-                <div
-                  key={agent.id}
-                  onClick={() => setSelectedAgent(agent.name)}
-                  className={`p-3 rounded-lg cursor-pointer transition-all ${
-                    selectedAgent === agent.name
-                      ? isDarkMode 
-                        ? 'bg-gray-800 text-white border border-orange-500' 
-                        : 'bg-orange-50 text-gray-900 border border-orange-300'
-                      : isDarkMode
-                        ? 'hover:bg-gray-800 text-gray-300 hover:text-white'
-                        : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${
-                      agent.active 
-                        ? 'bg-green-400' 
-                        : isDarkMode ? 'bg-gray-600' : 'bg-gray-400'
-                    }`} />
-                    <div className="flex-1">
-                      <div className="font-medium text-sm">{agent.name}</div>
-                      <div className={`text-xs ${
-                        selectedAgent === agent.name 
-                          ? isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                          : isDarkMode ? 'text-gray-500' : 'text-gray-500'
-                      }`}>
-                        {agent.category}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Your AI Assistant
+            </h3>
+
+            <select
+              value={selectedAgent}
+              onChange={(e) => setSelectedAgent(e.target.value)}
+              className={`w-full px-3 py-2 rounded-md border text-sm transition-colors outline-none
+                ${isDarkMode
+                  ? 'bg-gray-800 text-white border-gray-600 focus:border-orange-500'
+                  : 'bg-white text-gray-900 border-gray-300 focus:border-orange-400'
+                }`}
+            >
+              <option value="" disabled>View your assistant...</option>
+              {agents.map((agent) => (
+                <option key={agent.id} value={agent.name}>
+                  {agent.name}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
           {/* Recent Conversations */}
@@ -196,16 +242,39 @@ const Workspace = () => {
               <Settings className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`} />
             </div>
             <div className="space-y-3">
-              {mockConversations.map((conv) => (
-                <div key={conv.id} className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                  isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
-                }`}>
-                  <div className={`font-medium text-sm mb-1 truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{conv.title}</div>
-                  <div className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{conv.agent}</div>
-                  <div className={`text-xs truncate ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>{conv.preview}</div>
-                  <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>{conv.timestamp}</div>
-                </div>
-              ))}
+              {conversations.map((conv) => {
+                const lastMessage = conv.messages && conv.messages.length > 0
+                  ? conv.messages[conv.messages.length - 1]
+                  : null;
+                return (
+                  <div
+                    key={conv.id}
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      selectedConversation?.id === conv.id
+                        ? isDarkMode
+                          ? 'bg-orange-900 border border-orange-500 text-white'
+                          : 'bg-orange-100 border border-orange-400 text-orange-900'
+                        : isDarkMode
+                          ? 'hover:bg-gray-800'
+                          : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => dispatch(setSelectedConversation(conv))}
+                  >
+                    <div className={`font-medium text-sm mb-1 truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      Conversation #{conv.id}
+                    </div>
+                    <div className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {lastMessage ? (lastMessage.is_systen ? 'System' : 'User') : 'No messages'}
+                    </div>
+                    <div className={`text-xs truncate ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {lastMessage ? lastMessage.content : 'No messages yet'}
+                    </div>
+                    <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                      {lastMessage ? new Date(lastMessage.sent_at).toLocaleString() : new Date(conv.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -232,23 +301,40 @@ const Workspace = () => {
           {/* Chat Messages Area */}
           <div className={`flex-1 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
             {messages && messages?.length > 0 ? (
-              // ✅ Chat message display
+              //  Chat message display
               <div className="h-full flex flex-col gap-4 p-4 overflow-y-auto">
-                {messages.map((msg, index) => (
-                  <div
-                    key={index}
-                    className={`max-w-[70%] px-4 py-2 rounded-lg shadow text-sm ${
-                      msg.sender === 'user'
-                        ? `self-end ${isDarkMode ? 'bg-orange-500 text-white' : 'bg-orange-100 text-gray-900'}`
-                        : `self-start ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`
-                    }`}
-                  >
-                    {msg.content}
-                  </div>
-                ))}
+                {messages.map((msg, index) => {
+                  const msgDate = format(new Date(msg.sentAt), 'yyyy-MM-dd'); // Adjust based on your timestamp format
+                  const prevMsgDate =
+                    index > 0 ? format(new Date(messages[index - 1].sentAt), 'yyyy-MM-dd') : null;
+
+                  const showDateSeparator = msgDate !== prevMsgDate;
+
+                  return (
+                    <div key={index} className="flex flex-col items-center gap-1">
+                      {showDateSeparator && (
+                        <div className="text-xs text-gray-500 py-1 px-2 rounded bg-gray-200 dark:bg-gray-600 dark:text-white my-2">
+                          {format(new Date(msg.sentAt), 'PPP')} {/* e.g. Jan 1, 2025 */}
+                        </div>
+                      )}
+                      <div
+                        className={`max-w-[70%] px-4 py-2 rounded-lg shadow text-sm ${
+                          msg.sender !== 'user'
+                            ? `self-end ${isDarkMode ? 'bg-orange-500 text-white' : 'bg-orange-100 text-gray-900'}`
+                            : `self-start ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`
+                        }`}
+                      >
+                        <div>{msg.content}</div>
+                        <div className="text-[10px] text-right text-gray-400 mt-1">
+                          {format(new Date(msg.sentAt), 'p')} {/* e.g. 10:25 AM */}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              // ✅ Placeholder for no messages
+              //  Placeholder for no messages
               <div className="h-full flex flex-col items-center justify-center p-8">
                 <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 border-4 relative overflow-hidden ${
                   isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'

@@ -1,15 +1,5 @@
-
-agents are fetched, but rea;ltion need to be made
-- the language of choice should be stored in the local storage 
-- The subscriptions should lead to the assistant page with all the user agents preselected grayed out with the mark available.
-At this stage the user is able to select more agents and pay for them .
-- All the active plans should be store in the specific redux.
-
-
-- add the upgrade profile and the change password; popup appear with prefilled info. and for the password change, user can add password and confirm it .
-- update the language text accross the website
-- fetch all the agents from the backend
-- all the active agents should be grayed out
+-language
+- automatic subscription logic
 
 - if the conversatin is active( there is at least one message in the conversation), the chat area should contain a list of message on the left and the right side 
 - 

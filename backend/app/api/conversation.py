@@ -15,6 +15,7 @@ def get_conversations(db: Session = Depends(get_db), current_user: User = Depend
         raise HTTPException(status_code=403, detail="Admin privileges required")
     service = ConversationService(db)
     return service.get_conversations()
+
 @router.get("/users/{user_id}/conversations", response_model=list[Conversation])
 def get_conversations_by_user(
     user_id: int,

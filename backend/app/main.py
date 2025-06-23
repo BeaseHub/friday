@@ -1,10 +1,14 @@
-from fastapi import FastAPI
+# from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import home, agent, plan, conversation, message, subscription, payment, auth  # Import all routers
 # from app.api import auth  # Uncomment if you have an auth router
 import uvicorn
 
-app = FastAPI()
+from app.socket_manager import app, sio
+
+# app = FastAPI()
+# sio = SocketManager(app=app)  # Initialize with app here
+
 
 app.add_middleware(
     CORSMiddleware,

@@ -7,7 +7,10 @@ from app.db.database import get_db
 from app.schemas.user import User  # Import User schema if needed for authentication
 from app.api.auth import get_current_user  # Import the dependency to get the current user
 
+from app.socket_manager import sio  # Import the SocketManager instance
+from typing import Optional
 from uuid import uuid4
+from app.schemas.message import Message as MessageSchema
 import os
 
 router = APIRouter()
@@ -46,15 +49,19 @@ def get_message(
 @router.post("/messages", response_model=Message)
 async def create_message(
     content: str = Form(...),
-    conversation_id: int = Form(...),
+    conversation_id: Optional[int] = Form(None),  # Now optional
     file: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    conversation_service = ConversationService(db)
-    conversation = conversation_service.get_conversation(conversation_id)
-    if not conversation or conversation.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not authorized to add messages to this conversation")
+    # If conversation_id is provided, check ownership
+    if conversation_id is not None:
+        conversation_service = ConversationService(db)
+        conversation = conversation_service.get_conversation(conversation_id)
+        if not conversation or conversation.user_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Not authorized to add messages to this conversation")
+    else:
+        conversation = None  # Or handle as needed
 
     file_path = None
     if file:
@@ -67,13 +74,16 @@ async def create_message(
         file_path = f"{UPLOAD_DIR}/{filename}"
 
     service = MessageService(db)
-    return service.create_message(
+    message = service.create_message(
         user_id=current_user.id,
         content=content,
         is_systen=False,  # or Form(...) if you want to allow setting this
         file_path=file_path,
         conversation_id=conversation_id
     )
+    message_dict = MessageSchema.from_orm(message).dict(exclude={"conversation"})
+    await sio.emit('new_message', message_dict, room=f"conversation_{conversation_id}")
+    return message
 
 @router.put("/messages/{message_id}", response_model=Message)
 def update_message(

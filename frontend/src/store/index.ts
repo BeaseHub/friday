@@ -5,6 +5,7 @@ import subscriptionSlice from './slices/subscriptionSlice';
 import languageSlice from './slices/languageSlice';
 import planSlice from './slices/planSlice';
 import agentSlice from './slices/agentSlice';
+import chatSlice from './slices/chatSlice';
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     language: languageSlice,
     plan: planSlice,
     agent: agentSlice,
+    chat: chatSlice,
   },
 });
 

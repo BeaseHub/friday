@@ -25,6 +25,7 @@ def get_agents(db: Session = Depends(get_db)):
 def get_active_agents(db: Session = Depends(get_db)):
     service = AgentService(db)
     return service.get_active_agents()
+    
 
 @router.get("/agents/{agent_id}", response_model=Agent)
 def get_agent(agent_id: int, db: Session = Depends(get_db)):

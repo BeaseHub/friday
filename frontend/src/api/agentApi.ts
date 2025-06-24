@@ -24,6 +24,7 @@ export const getActiveAgents = async () => {
   }
 };
 
+
 // Get a agent by ID
 export const getAgentById = async (agentId: number | string) => {
   try {

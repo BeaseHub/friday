@@ -18,7 +18,7 @@ import {
 }  from '@/store/slices/subscriptionSlice';
 import { getActiveAgents,getAgentById } from '@/api/agentApi';
 import { getActivePlans } from '@/api/planApi';
-import { getActiveSubscriptionsByUser } from '@/api/subscription';
+import { getActiveSubscriptionsByUser } from '@/api/subscriptionApi';
 
 
 

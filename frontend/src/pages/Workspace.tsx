@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { getConversationsByUser,createMessage } from '@/api/chatApi';
 import { setConversations,setSelectedConversation,addMessageToConversation,setLoading,clearChat } from '@/store/slices/chatSlice';
 import { setAgents } from '@/store/slices/agentSlice';
-import { getActiveAgents } from '@/api/agentApi';
+import {getActiveSubscriptionsByUser} from '@/api/subscriptionApi';
 import { format } from 'date-fns';
 import { io, Socket } from 'socket.io-client';
 
@@ -66,9 +66,10 @@ const Workspace = () => {
     const fetchAgents = async () => {
           setLoading(true);
           try {
-            // Fetch active agents from the API
-            const agents = await getActiveAgents();
-            dispatch(setAgents(agents || []));
+            // Fetch active agents from the users subscription
+            const activeSubscriptions  = await getActiveSubscriptionsByUser();
+            const activeSubscription = activeSubscriptions ?.[0] || null;
+            dispatch(setAgents(activeSubscription.agents || []));
   
           } catch (error) {
             // Optionally handle error (toast, etc.)
@@ -79,7 +80,7 @@ const Workspace = () => {
       };
 
     fetchAgents();
-    fetchConversations();
+    //fetchConversations();
   }, []);
 
   useEffect(() => {

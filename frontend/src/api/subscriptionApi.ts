@@ -64,7 +64,7 @@ export const getActiveSubscriptionsByUser = async () => {
       `${API_URL}/users/${userId}/subscriptions/active`,
       { headers: getAuthHeader() }
     );
-    console.log('Active subscriptions response:', res);
+    console.log('Active subscriptions by user response:', res);
     return res.data;
   } catch (error) {
     handleApiError(error);

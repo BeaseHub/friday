@@ -9,7 +9,7 @@ import { useAppSelector, useAppDispatch } from '@/hooks/useRedux';
 import { clearAgents } from '@/store/slices/agentSlice';
 import AuthModal from '@/components/AuthModal';
 import { useToast } from '@/hooks/use-toast';
-import {createSubscription} from '@/api/subscription';
+import {createSubscription} from '@/api/subscriptionApi';
 
 
 const Summary = () => {

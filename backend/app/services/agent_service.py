@@ -8,6 +8,7 @@ class AgentService:
     def get_agents(self):
         return self.db.query(Agent).all()
     
+    
     def get_active_agents(self):
         return self.db.query(Agent).filter(Agent.is_active == True).all()
 

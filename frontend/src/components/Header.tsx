@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, User, Globe } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
-import { logout } from '@/store/slices/authSlice';
+import { logout,updateUser } from '@/store/slices/authSlice';
 import { setLanguage } from '@/store/slices/languageSlice';
 import { clearAgents } from '@/store/slices/agentSlice';
 import {
@@ -24,6 +24,7 @@ const Header = () => {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'update' | 'changePassword'>('login');
 
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleAuthClick = (mode: 'login' | 'signup' | 'update' | 'changePassword') => {
     setAuthMode(mode);
@@ -49,6 +50,23 @@ const Header = () => {
     const newLanguage = currentLanguage === 'en' ? 'fr' : 'en';
     dispatch(setLanguage(newLanguage));
   };
+
+  // ...inside Header component, after hooks:
+  useEffect(() => {
+    if (!user) {
+      const stored = localStorage.getItem('auth');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.user) {
+            dispatch(updateUser(parsed.user));
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    }
+  }, [user, dispatch]);
 
   const translations = {
     en: {
@@ -89,9 +107,9 @@ const Header = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/20">
                 {user ? (
-                  user.profilePic ? (
+                  user.profilePicturePath ? (
                     <img 
-                      src={user.profilePic} 
+                      src={user.profilePicturePath ? `${API_URL}/${user.profilePicturePath.replace(/^\/+/, '')}` : ''} 
                       alt="Profile" 
                       className="w-8 h-8 rounded-full object-cover border border-white/30"
                     />

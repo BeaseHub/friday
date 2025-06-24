@@ -3,11 +3,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import home, agent, plan, conversation, message, subscription, payment, auth  # Import all routers
 # from app.api import auth  # Uncomment if you have an auth router
 import uvicorn
+from fastapi.staticfiles import StaticFiles
+import os
 
 from app.socket_manager import app, sio
 
 # app = FastAPI()
 # sio = SocketManager(app=app)  # Initialize with app here
+
+os.makedirs("uploads/messages", exist_ok=True)
+os.makedirs("uploads/profiles", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 app.add_middleware(

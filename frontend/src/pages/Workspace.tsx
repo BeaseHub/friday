@@ -10,6 +10,7 @@ import { getConversationsByUser,createMessage } from '@/api/chatApi';
 import { setConversations,setSelectedConversation,addMessageToConversation,setLoading,clearChat } from '@/store/slices/chatSlice';
 import { setAgents } from '@/store/slices/agentSlice';
 import {getActiveSubscriptionsByUser} from '@/api/subscriptionApi';
+import { Plus } from "lucide-react";
 import { format } from 'date-fns';
 import { io, Socket } from 'socket.io-client';
 
@@ -29,10 +30,12 @@ const Workspace = () => {
   const navigate = useNavigate();
 
   const [messages, setMessages] = useState<
-    { sender: string; content: string; file?: File | null, sentAt:string }[]
+    { sender: string; content: string; file?: File | string | null; sentAt: string }[]
   >([]);
 
   const socketRef = useRef<Socket | null>(null);
+
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const getAuthUserAndToken = () => {
     const auth = localStorage.getItem('auth');
@@ -80,7 +83,7 @@ const Workspace = () => {
       };
 
     fetchAgents();
-    //fetchConversations();
+    fetchConversations();
   }, []);
 
   useEffect(() => {
@@ -113,7 +116,7 @@ const Workspace = () => {
       setMessages(selectedConversation.messages.map(msg => ({
         sender: msg.is_systen ? 'system' : selectedConversation.user_id === getAuthUserAndToken().userId ? 'user' : 'Unknonwn',
         content: msg.content,
-        file: msg.file_path ? new File([], msg.file_path) : null,
+        file: msg.file_path ? `${API_URL}/${msg.file_path.replace(/^\/+/, '')}` : null,
         sentAt: format(new Date(msg.sent_at), 'yyyy-MM-dd HH:mm:ss')
       })));
     }
@@ -131,9 +134,10 @@ const Workspace = () => {
       const currentConversationId = selectedConversation?.id; // <-- Replace with actual selected conversation ID
 
       try {
-        await createMessage(message, currentConversationId, token);
+        await createMessage(message, currentConversationId, token, file);
         // Optionally: refresh messages or update UI here
         setMessage('');
+        setFile(null);
       } catch (error) {
         console.error('Error sending message:', error);
         // Optionally: show a toast or error message to the user
@@ -240,7 +244,20 @@ const Workspace = () => {
           <div className="flex-1 p-6 overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Conversations</h3>
-              <Settings className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`} />
+              <Button
+                variant="ghost"
+                size="icon"
+                className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}
+                onClick={() => {
+                  setMessage('');
+                  setMessages([]);
+                  setFile(null);
+                  dispatch(setSelectedConversation(null));
+                }}
+                title="New Chat"
+              >
+                <Plus className="w-5 h-5" />
+              </Button>
             </div>
             <div className="space-y-3">
               {conversations.map((conv) => {
@@ -289,7 +306,7 @@ const Workspace = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>AI Workspace</h1>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Currently chatting with {selectedAgent}</p>
+                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}></p>
               </div>
               <Button variant="ghost" size="icon" className={`${
                 isDarkMode ? 'text-gray-400 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -302,38 +319,84 @@ const Workspace = () => {
           {/* Chat Messages Area */}
           <div className={`flex-1 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
             {messages && messages?.length > 0 ? (
-              //  Chat message display
-              <div className="h-full flex flex-col gap-4 p-4 overflow-y-auto">
-                {messages.map((msg, index) => {
-                  const msgDate = format(new Date(msg.sentAt), 'yyyy-MM-dd'); // Adjust based on your timestamp format
-                  const prevMsgDate =
-                    index > 0 ? format(new Date(messages[index - 1].sentAt), 'yyyy-MM-dd') : null;
+            // Chat message display
+            <div className="h-full flex flex-col gap-4 p-4 overflow-y-auto">
+              {messages.map((msg, index) => {
+                const msgDate = format(new Date(msg.sentAt), 'yyyy-MM-dd');
+                const prevMsgDate =
+                  index > 0 ? format(new Date(messages[index - 1].sentAt), 'yyyy-MM-dd') : null;
 
-                  const showDateSeparator = msgDate !== prevMsgDate;
+                const showDateSeparator = msgDate !== prevMsgDate;
 
-                  return (
-                    <div key={index} className="flex flex-col items-center gap-1">
-                      {showDateSeparator && (
-                        <div className="text-xs text-gray-500 py-1 px-2 rounded bg-gray-200 dark:bg-gray-600 dark:text-white my-2">
-                          {format(new Date(msg.sentAt), 'PPP')} {/* e.g. Jan 1, 2025 */}
-                        </div>
-                      )}
-                      <div
-                        className={`max-w-[70%] px-4 py-2 rounded-lg shadow text-sm ${
-                          msg.sender !== 'user'
-                            ? `self-end ${isDarkMode ? 'bg-orange-500 text-white' : 'bg-orange-100 text-gray-900'}`
-                            : `self-start ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`
-                        }`}
-                      >
-                        <div>{msg.content}</div>
-                        <div className="text-[10px] text-right text-gray-400 mt-1">
-                          {format(new Date(msg.sentAt), 'p')} {/* e.g. 10:25 AM */}
-                        </div>
+                return (
+                  <div key={index} className="flex flex-col items-center gap-1">
+                    {showDateSeparator && (
+                      <div className="text-xs text-gray-500 py-1 px-2 rounded bg-gray-200 dark:bg-gray-600 dark:text-white my-2">
+                        {format(new Date(msg.sentAt), 'PPP')}
+                      </div>
+                    )}
+                    <div
+                      className={`max-w-[70%] px-4 py-2 rounded-lg shadow text-sm flex flex-col ${
+                        msg.sender !== 'user'
+                          ? `self-end ${isDarkMode ? 'bg-orange-500 text-white' : 'bg-orange-100 text-gray-900'}`
+                          : `self-start ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`
+                      }`}
+                    >
+                      <div>{msg.content}</div>
+                      {/* File/Image preview inside the bubble */}
+                        {msg.file && (
+                          <div className="mt-2 w-full">
+                            {typeof msg.file === 'string' && (msg.file as string).match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                              <a
+                                href={msg.file as string}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full max-w-xs"
+                                title="Click to view or download"
+                              >
+                                <img
+                                  src={msg.file as string}
+                                  alt="attachment"
+                                  className="w-full h-32 object-cover rounded border border-gray-300 cursor-pointer"
+                                />
+                              </a>
+                            ) : msg.file instanceof File && msg.file.name.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                              <a
+                                href={URL.createObjectURL(msg.file)}
+                                download={msg.file.name}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full max-w-xs"
+                                title="Click to view or download"
+                              >
+                                <img
+                                  src={URL.createObjectURL(msg.file)}
+                                  alt="attachment"
+                                  className="w-full h-32 object-cover rounded border border-gray-300 cursor-pointer"
+                                />
+                              </a>
+                            ) : (
+                              <a
+                                href={typeof msg.file === 'string' ? msg.file : undefined}
+                                download
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="w-full max-w-xs h-12 flex items-center justify-center bg-gray-200 rounded border border-gray-300 text-xs text-gray-700 hover:bg-gray-300 mt-1"
+                              >
+                                File
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      <div className="text-[10px] text-right text-gray-400 mt-1">
+                        {format(new Date(msg.sentAt), 'p')}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
+            </div>
             ) : (
               //  Placeholder for no messages
               <div className="h-full flex flex-col items-center justify-center p-8">
@@ -368,7 +431,7 @@ const Workspace = () => {
                 
                 <h2 className={`text-2xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Welcome to your AI Workspace</h2>
                 <p className={`mb-8 text-center max-w-md ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {recording ? 'Listening... Speak now!' : `Start a conversation with ${selectedAgent} using voice or text`}
+                  {recording ? 'Listening... Speak now!' : `Start a conversation  using voice or text`}
                 </p>
 
                 <div className="flex gap-4">
@@ -418,7 +481,7 @@ const Workspace = () => {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder={`Type your message to ${selectedAgent}...`}
+                  placeholder={`Type your message to your agents...`}
                   className={`min-h-[50px] resize-none border pr-12 focus:ring-2 ${
                     isDarkMode 
                       ? 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:ring-orange-500 focus:border-orange-500'
@@ -453,6 +516,55 @@ const Workspace = () => {
               </Button>
             </div>
             
+            {file && (
+              <div className="flex flex-col items-center mb-2">
+                <div className="relative">
+                  {file.type.startsWith('image/') ? (
+                    <a
+                      href={URL.createObjectURL(file)}
+                      download={file.name}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                      title="Click to view or download"
+                    >
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt="preview"
+                        className="w-10 h-10 object-cover rounded border border-gray-300 shadow cursor-pointer"
+                      />
+                    </a>
+                  ) : (
+                    <a
+                      href={URL.createObjectURL(file)}
+                      download={file.name}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded border border-gray-300 shadow text-[10px] text-gray-700 cursor-pointer"
+                      title="Click to download"
+                    >
+                      <span className="truncate px-1">{file.name.split('.').pop()?.toUpperCase() || 'FILE'}</span>
+                    </a>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setFile(null)}
+                    className="absolute -top-2 -right-2 text-red-500 bg-white rounded-full shadow hover:bg-red-100"
+                    title="Remove file"
+                    style={{ width: 20, height: 20, minWidth: 20, minHeight: 20, padding: 0, fontSize: 14 }}
+                  >
+                    ×
+                  </Button>
+                </div>
+                <span className="mt-1 text-[11px] text-gray-600 max-w-[80px] truncate text-center">{file.name}</span>
+              </div>
+            )}
+
+            <div className="text-xs text-gray-500 mt-1 mb-2 text-center">
+              Only one file allowed per message.
+            </div>
+
             <input
               ref={fileInputRef}
               type="file"
@@ -460,7 +572,7 @@ const Workspace = () => {
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  console.log('File selected:', file.name);
+                  setFile(file);
                 }
               }}
               accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"

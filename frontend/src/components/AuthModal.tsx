@@ -28,6 +28,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
 
   const token=user?.token || '';
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -35,7 +37,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
     phoneNumber: '',
     password: '',
     confirmPassword: '',
-    profilePic: '',
+    profilePicturePath:'',
+    profilePicture: null as File | null,
   });
 
   useEffect(() => {
@@ -46,7 +49,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
         lastName: user.lastName || '',
         email: user.email || '',
         phoneNumber: user.phoneNumber || '',
-        profilePic: user.profilePic || '',
+        profilePicturePath: user.profilePicturePath ? `${API_URL}/${user.profilePicturePath.replace(/^\/+/, '')}` : null,
       }));
     } else if (mode === 'changePassword' && user && !formData.email) {
       setFormData((prev) => ({
@@ -68,11 +71,11 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, profilePic: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      setFormData(prev => ({
+        ...prev,
+        profilePicture: file,
+        profilePicturePath: '' // clear the path when a new file is selected
+      }));
     }
   };
 
@@ -109,71 +112,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
     return true;
   };
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-    
-  //   if (!validateForm()) return;
-    
-  //   setLoading(true);
-    
-  //   try {
-  //     // Simulate API call
-  //     await new Promise(resolve => setTimeout(resolve, 1000));
-      
-  //     if (mode === 'login') {
-  //       const user = {
-  //         id: '1',
-  //         firstName: formData.email.split('@')[0],
-  //         lastName: '',
-  //         email: formData.email,
-  //         phoneNumber: '',
-  //         initials: formData.email.substring(0, 2).toUpperCase(),
-  //         profilePic: ''
-  //       };
-        
-  //       dispatch(login(user));
-  //       toast({
-  //         title: "Welcome back!",
-  //         description: "You have successfully logged in.",
-  //       });
-  //     } else {
-  //       const user = {
-  //         id: '1',
-  //         firstName: formData.firstName,
-  //         lastName: formData.lastName,
-  //         email: formData.email,
-  //         phoneNumber: formData.phoneNumber,
-  //         initials: (formData.firstName.charAt(0) + formData.lastName.charAt(0)).toUpperCase(),
-  //         profilePic: formData.profilePic
-  //       };
-        
-  //       dispatch(login(user));
-  //       toast({
-  //         title: "Account created!",
-  //         description: "Welcome to Friday AI Platform.",
-  //       });
-  //     }
-      
-  //     onClose();
-  //     setFormData({
-  //       firstName: '',
-  //       lastName: '',
-  //       email: '',
-  //       phoneNumber: '',
-  //       password: '',
-  //       confirmPassword: '',
-  //       profilePic: ''
-  //     });
-  //   } catch (error) {
-  //     toast({
-  //       title: "Error",
-  //       description: "Something went wrong. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -197,7 +136,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
             lastName: user.last_name,
             email: user.email,
             phoneNumber: user.phone_number,
-            profilePic: user.profile_picture_path ?? '',
+            profilePicturePath: user.profile_picture_path ?? '',
             initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
             role: user.type,
             token: result.data.access_token, // if your slice or storage uses it
@@ -216,8 +155,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
       form.append('first_name', formData.firstName);
       form.append('last_name', formData.lastName);
       form.append('phone_number', formData.phoneNumber);
-      if (formData.profilePic && typeof formData.profilePic !== 'string') {
-        form.append('profile_picture', formData.profilePic);
+      if (formData.profilePicture) {
+        form.append('profile_picture', formData.profilePicture);
       }
       // Optionally: form.append('is_active', formData.isActive);
 
@@ -234,7 +173,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
             lastName: user.last_name,
             email: user.email,
             phoneNumber: user.phone_number,
-            profilePic: user.profile_picture_path ?? '',
+            profilePicturePath: user.profile_picture_path ?? '',
             initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
             role: user.type,
             token: result.data.access_token, // if your slice or storage uses it
@@ -288,8 +227,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
       form.append('first_name', formData.firstName);
       form.append('last_name', formData.lastName);
       form.append('phone_number', formData.phoneNumber);
-      if (formData.profilePic && typeof formData.profilePic !== 'string') {
-        form.append('profile_picture', formData.profilePic);
+      if (formData.profilePicture) {
+        form.append('profile_picture', formData.profilePicture);
       }
       // Call signup API
     const result = await signup(form);
@@ -316,7 +255,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
       phoneNumber: '',
       password: '',
       confirmPassword: '',
-      profilePic: ''
+      profilePicturePath: '',
+      profilePicture: null,
     });
   } catch (error: any) {
     toast({
@@ -396,17 +336,17 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
               </div>
               
               <div>
-                <Label htmlFor="profilePic" className="text-white">Profile Picture</Label>
+                <Label htmlFor="profilePicturePath" className="text-white">Profile Picture</Label>
                 <div className="mt-1 flex items-center gap-3">
-                  {formData.profilePic && (
+                  {formData.profilePicturePath && (
                     <img 
-                      src={formData.profilePic} 
+                      src={formData.profilePicturePath} 
                       alt="Profile" 
                       className="w-12 h-12 rounded-full object-cover"
                     />
                   )}
                   <Input
-                    id="profilePic"
+                    id="profilePicturePath"
                     type="file"
                     accept="image/*"
                     onChange={handleFileUpload}

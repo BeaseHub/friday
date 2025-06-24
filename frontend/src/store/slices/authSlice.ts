@@ -7,7 +7,8 @@ interface User {
   lastName: string;
   email: string;
   phoneNumber: string;
-  profilePic?: string;
+  profilePicturePath?: string;
+  profilePicture?: File;
   initials: string;
   token: string;
   role: 'user' | 'admin';

@@ -72,13 +72,18 @@ async def signup(
     db_user = service.get_user_by_email(email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+    
     profile_picture_path = None
     if profile_picture:
+        UPLOAD_DIR = "uploads/profiles"
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
         filename = f"{uuid4()}_{profile_picture.filename}"
         file_location = os.path.join(UPLOAD_DIR, filename)
         with open(file_location, "wb") as f:
             f.write(await profile_picture.read())
-        profile_picture_path = f"uploads/{filename}"
+        profile_picture_path = f"{UPLOAD_DIR}/{filename}"
+
+
     return service.create_user(
         email,
         password,
@@ -88,6 +93,7 @@ async def signup(
         profile_picture_path=profile_picture_path,
         type="user"
     )
+
 @router.post("/admin/create-user", response_model=User)
 async def create_user_admin(
     email: str = Form(...),
@@ -106,13 +112,17 @@ async def create_user_admin(
     # Only allow if current user is an admin
     if current_user.type != "admin":
         raise HTTPException(status_code=403, detail="Not authorized")
+    
     profile_picture_path = None
     if profile_picture:
+        UPLOAD_DIR = "uploads/profiles"
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
         filename = f"{uuid4()}_{profile_picture.filename}"
         file_location = os.path.join(UPLOAD_DIR, filename)
         with open(file_location, "wb") as f:
             f.write(await profile_picture.read())
-        profile_picture_path = f"uploads/{filename}"
+        profile_picture_path = f"{UPLOAD_DIR}/{filename}"
+
     return service.create_user(
         email,
         password,
@@ -179,9 +189,13 @@ async def update_profile(
     if is_active is not None:
         update_data["is_active"] = is_active
     if profile_picture:
+        UPLOAD_DIR = "uploads/profiles"
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        # Save the profile picture with a unique filename
         filename = f"{uuid4()}_{profile_picture.filename}"
         file_location = os.path.join(UPLOAD_DIR, filename)
         with open(file_location, "wb") as f:
             f.write(await profile_picture.read())
-        update_data["profile_picture_path"] = f"uploads/{filename}"
+        update_data["profile_picture_path"] = f"{UPLOAD_DIR}/{filename}"
     return service.update_profile(user, **update_data)
+

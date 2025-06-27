@@ -13,6 +13,16 @@ import {getActiveSubscriptionsByUser} from '@/api/subscriptionApi';
 import { Plus } from "lucide-react";
 import { format } from 'date-fns';
 import { io, Socket } from 'socket.io-client';
+import Draggable from 'react-draggable';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'elevenlabs-convai': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & { 'agent-id': string };
+    }
+  }
+}
 
 
 
@@ -22,6 +32,7 @@ const Workspace = () => {
   const [selectedAgent, setSelectedAgent] = useState('Creative Canvas');
   const [recording, setRecording] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+   const [sidebarOpen, setSidebarOpen] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const { conversations, selectedConversation } = useAppSelector((state) => state.chat);
@@ -162,6 +173,11 @@ const Workspace = () => {
 
   return (
     <div className={`h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+      {/* Eleven lab widget */}
+      <div className="flex justify-center p-4 bg-white shadow-sm">
+        <elevenlabs-convai agent-id="3AV2tYqySsT8uWSEV2ay"></elevenlabs-convai>
+      </div>
+
       {/* Workspace Header */}
       <div className={`flex items-center justify-between p-6 border-b ${
         isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
@@ -196,105 +212,132 @@ const Workspace = () => {
         </div>
       </div>
       
+      
       <div className="h-[calc(100vh-88px)] flex">
         {/* Sidebar */}
-        <div className={`w-80 border-r flex flex-col shadow-sm ${
-          isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
-        }`}>
-          {/* Sidebar Header */}
-          <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-orange-100 border border-orange-200'
-              }`}>
-                <span className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-orange-600'}`}>{getAuthUserAndToken().initials}</span>
-              </div>
-              <div>
-                <div className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{getAuthUserAndToken().fullName}</div>
-                
-              </div>
-            </div>
-          </div>
+        <div className={`
+          transition-all duration-300
+          ${sidebarOpen ? 'w-80' : 'w-10'}
+          border-r flex flex-col shadow-sm
+          ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}
+          relative
+        `}>
+          {/* Toggle Button */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`
+              absolute top-4 right-[-16px] z-10 w-8 h-8 flex items-center justify-center
+              rounded-full shadow bg-white border border-gray-300
+              ${isDarkMode ? 'bg-gray-800 border-gray-700 text-white' : 'text-gray-700'}
+              hover:bg-orange-100
+              transition-all
+            `}
+            title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+            style={{ outline: 'none' }}
+          >
+            {sidebarOpen ? <ChevronLeft /> : <ChevronRight />}
+          </button>
 
-          {/* AI Assistants */}
-          <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-              Your AI Assistant
-            </h3>
-
-            <select
-              value={selectedAgent}
-              onChange={(e) => setSelectedAgent(e.target.value)}
-              className={`w-full px-3 py-2 rounded-md border text-sm transition-colors outline-none
-                ${isDarkMode
-                  ? 'bg-gray-800 text-white border-gray-600 focus:border-orange-500'
-                  : 'bg-white text-gray-900 border-gray-300 focus:border-orange-400'
-                }`}
-            >
-              <option value="" disabled>View your assistant...</option>
-              {agents.map((agent) => (
-                <option key={agent.id} value={agent.name}>
-                  {agent.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Recent Conversations */}
-          <div className="flex-1 p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Conversations</h3>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}
-                onClick={() => {
-                  setMessage('');
-                  setMessages([]);
-                  setFile(null);
-                  dispatch(setSelectedConversation(null));
-                }}
-                title="New Chat"
-              >
-                <Plus className="w-5 h-5" />
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {conversations.map((conv) => {
-                const lastMessage = conv.messages && conv.messages.length > 0
-                  ? conv.messages[conv.messages.length - 1]
-                  : null;
-                return (
-                  <div
-                    key={conv.id}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedConversation?.id === conv.id
-                        ? isDarkMode
-                          ? 'bg-orange-900 border border-orange-500 text-white'
-                          : 'bg-orange-100 border border-orange-400 text-orange-900'
-                        : isDarkMode
-                          ? 'hover:bg-gray-800'
-                          : 'hover:bg-gray-50'
-                    }`}
-                    onClick={() => dispatch(setSelectedConversation(conv))}
-                  >
-                    <div className={`font-medium text-sm mb-1 truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      Conversation #{conv.id}
-                    </div>
-                    <div className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                      {lastMessage ? (lastMessage.is_systen ? 'System' : 'User') : 'No messages'}
-                    </div>
-                    <div className={`text-xs truncate ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                      {lastMessage ? lastMessage.content : 'No messages yet'}
-                    </div>
-                    <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
-                      {lastMessage ? new Date(lastMessage.sent_at).toLocaleString() : new Date(conv.created_at).toLocaleString()}
-                    </div>
+          {sidebarOpen && (
+            <>
+              {/* Sidebar Header */}
+              <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                    isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-orange-100 border border-orange-200'
+                  }`}>
+                    <span className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-orange-600'}`}>{getAuthUserAndToken().initials}</span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  <div>
+                    <div className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{getAuthUserAndToken().fullName}</div>
+                    
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Assistants */}
+              <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                  Your AI Assistant
+                </h3>
+
+                <select
+                  value={selectedAgent}
+                  onChange={(e) => setSelectedAgent(e.target.value)}
+                  className={`w-full px-3 py-2 rounded-md border text-sm transition-colors outline-none
+                    ${isDarkMode
+                      ? 'bg-gray-800 text-white border-gray-600 focus:border-orange-500'
+                      : 'bg-white text-gray-900 border-gray-300 focus:border-orange-400'
+                    }`}
+                >
+                  <option value="" disabled>View your assistant...</option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={agent.name}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Recent Conversations */}
+              <div className="flex-1 p-6 overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Conversations</h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}
+                    onClick={() => {
+                      setMessage('');
+                      setMessages([]);
+                      setFile(null);
+                      dispatch(setSelectedConversation(null));
+                    }}
+                    title="New Chat"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {conversations.map((conv) => {
+                    const lastMessage = conv.messages && conv.messages.length > 0
+                      ? conv.messages[conv.messages.length - 1]
+                      : null;
+                    return (
+                      <div
+                        key={conv.id}
+                        className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                          selectedConversation?.id === conv.id
+                            ? isDarkMode
+                              ? 'bg-orange-900 border border-orange-500 text-white'
+                              : 'bg-orange-100 border border-orange-400 text-orange-900'
+                            : isDarkMode
+                              ? 'hover:bg-gray-800'
+                              : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => dispatch(setSelectedConversation(conv))}
+                      >
+                        <div className={`font-medium text-sm mb-1 truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          Conversation #{conv.id}
+                        </div>
+                        <div className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          {lastMessage ? (lastMessage.is_systen ? 'System' : 'User') : 'No messages'}
+                        </div>
+                        <div className={`text-xs truncate ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                          {lastMessage ? lastMessage.content : 'No messages yet'}
+                        </div>
+                        <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
+                          {lastMessage ? new Date(lastMessage.sent_at).toLocaleString() : new Date(conv.created_at).toLocaleString()}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
+          )}
+          
+      
         </div>
 
         {/* Main Chat Area */}
@@ -458,9 +501,12 @@ const Workspace = () => {
                     Type Message
                   </Button>
                 </div>
+                
               </div>
             )}
           </div>
+
+          
 
           {/* Input Area */}
           <div className={`border-t p-6 ${
@@ -580,6 +626,7 @@ const Workspace = () => {
           </div>
         </div>
       </div>
+
     </div>
   );
 };

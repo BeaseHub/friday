@@ -21,9 +21,13 @@ class MessageInDB(MessageBase):
     sent_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True  # For Pydantic v2 compatibility
+        from_attributes = True
+        orm_mode = True  # For Pydantic v1  # For Pydantic v2 compatibility
 
 # For reading with nested conversation
 from app.schemas.conversation import ConversationInDB
 class Message(MessageInDB):
     conversation: Optional[ConversationInDB] = None
+
+    class Config:
+        orm_mode = True

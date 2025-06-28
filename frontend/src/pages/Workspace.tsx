@@ -40,6 +40,9 @@ const Workspace = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  // Add this ref for the chat scroll area
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
   const [messages, setMessages] = useState<
     { sender: string; content: string; file?: File | string | null; sentAt: string }[]
   >([]);
@@ -62,6 +65,7 @@ const Workspace = () => {
       return { userId: null, token: null,fullName: null, initials: null};
     }
   };
+
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -131,7 +135,15 @@ const Workspace = () => {
         sentAt: format(new Date(msg.sent_at), 'yyyy-MM-dd HH:mm:ss')
       })));
     }
+    console.log(messages);
   }, [selectedConversation]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   if (!isAuthenticated) {
     navigate('/');
@@ -360,10 +372,12 @@ const Workspace = () => {
           </div>
 
           {/* Chat Messages Area */}
-          <div className={`flex-1 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+          <div 
+            ref={chatScrollRef}
+            className={`flex-1 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} relative overflow-y-auto`}>
             {messages && messages?.length > 0 ? (
             // Chat message display
-            <div className="h-full flex flex-col gap-4 p-4 overflow-y-auto">
+            <div className="flex flex-col gap-4 p-4">
               {messages.map((msg, index) => {
                 const msgDate = format(new Date(msg.sentAt), 'yyyy-MM-dd');
                 const prevMsgDate =
@@ -380,7 +394,7 @@ const Workspace = () => {
                     )}
                     <div
                       className={`max-w-[70%] px-4 py-2 rounded-lg shadow text-sm flex flex-col ${
-                        msg.sender !== 'user'
+                        msg.sender !== 'system'
                           ? `self-end ${isDarkMode ? 'bg-orange-500 text-white' : 'bg-orange-100 text-gray-900'}`
                           : `self-start ${isDarkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'}`
                       }`}

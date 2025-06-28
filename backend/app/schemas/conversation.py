@@ -14,7 +14,7 @@ class ConversationUpdate(BaseModel):
 class ConversationInDB(ConversationBase):
     id: int
     created_at: Optional[datetime] = None
-
+    
     class Config:
         orm_mode = True
 

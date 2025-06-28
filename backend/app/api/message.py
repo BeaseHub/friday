@@ -12,6 +12,7 @@ from typing import Optional
 from uuid import uuid4
 from app.schemas.message import Message as MessageSchema
 import os
+import httpx
 
 router = APIRouter()
 
@@ -81,9 +82,57 @@ async def create_message(
         file_path=file_path,
         conversation_id=conversation_id
     )
-    message_dict = MessageSchema.from_orm(message).dict(exclude={"conversation"})
-    await sio.emit('new_message', message_dict, room=f"conversation_{conversation_id}")
+    # message_dict = MessageSchema.from_orm(message).dict(exclude={"conversation"})
+    # await sio.emit('new_message', message_dict, room=f"conversation_{conversation_id}")
+    
+    # Wait for thse system response to be generated
+    await system_response(
+        user_message=content,
+        conversation_id=conversation_id,
+        db=db,
+        sio=sio
+    )
+
     return message
+
+# Example system_response function
+async def system_response(user_message: str, conversation_id: int, db: Session, sio):
+    """
+    Calls n8n to get a system response, saves it as a message, and emits it.
+    """
+
+    # Call your n8n webhook or API to get the system response
+    async with httpx.AsyncClient(timeout=20.0) as client:
+        n8n_response = await client.post(
+            "https://n8n.srv793731.hstgr.cloud/webhook/friday",
+            json={"message": user_message}
+        )
+
+        print("n8n status code:", n8n_response.status_code)
+        print("n8n response text:", n8n_response.text)
+
+        system_content = n8n_response.text
+        # try:
+        #     n8n_data = n8n_response.json()
+        #     system_content = n8n_data.get("response", "No response from system.")
+        # except Exception as e:
+        #     system_content = f"System error: {str(e)} | n8n said: {n8n_response.text}"
+
+
+    # Save the system message
+    service = MessageService(db)
+    system_message = service.create_message(
+        user_id=None,  # or a system user id
+        content=system_content,
+        is_systen=True,
+        file_path=None,
+        conversation_id=conversation_id
+    )
+
+    print(f"System response saved: {system_content}")
+
+    # system_message_dict = MessageSchema.from_orm(system_message).dict(exclude={"conversation"})
+    # await sio.emit('new_message', system_message_dict, room=f"conversation_{conversation_id}")
 
 @router.put("/messages/{message_id}", response_model=Message)
 def update_message(

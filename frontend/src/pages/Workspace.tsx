@@ -229,7 +229,7 @@ const Workspace = () => {
         {/* Sidebar */}
         <div className={`
           transition-all duration-300
-          ${sidebarOpen ? 'w-80' : 'w-10'}
+          ${sidebarOpen ? 'w-80' : 'w-0'}
           border-r flex flex-col shadow-sm
           ${isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}
           relative

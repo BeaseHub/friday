@@ -5,20 +5,22 @@ from app.api import home, agent, plan, conversation, message, subscription, paym
 import uvicorn
 from fastapi.staticfiles import StaticFiles
 import os
+from fastapi import FastAPI
 
-from app.socket_manager import app, sio
+from app.socket_manager import sio, socket_app
 
-# app = FastAPI()
+app = FastAPI()
 # sio = SocketManager(app=app)  # Initialize with app here
 
 os.makedirs("uploads/messages", exist_ok=True)
 os.makedirs("uploads/profiles", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+app.mount("/socket.io", socket_app)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +34,7 @@ app.include_router(message.router)
 app.include_router(subscription.router)
 app.include_router(payment.router)
 app.include_router(auth.router)
+
 
 @app.get("/")
 def read_root():

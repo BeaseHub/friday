@@ -1,5 +1,4 @@
-from fastapi_socketio import SocketManager
-from fastapi import FastAPI
+import socketio
 
-app = FastAPI()
-sio = SocketManager(app=app)
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins=[])
+socket_app = socketio.ASGIApp(sio)

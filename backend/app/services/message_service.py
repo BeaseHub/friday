@@ -17,7 +17,6 @@ class MessageService:
     def create_message(self, user_id: int, content: str, is_systen: bool = False, file_path: str = None, conversation_id: int = None):
         # If conversation_id is not provided, create a new conversation
         if conversation_id is None:
-            print(f"Creating new conversation for user_id: {user_id}")
             conversation = Conversation(user_id=user_id)
             self.db.add(conversation)
             self.db.commit()

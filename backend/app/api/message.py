@@ -74,9 +74,6 @@ async def create_message(
             f_out.write(await file.read())
         file_path = f"{UPLOAD_DIR}/{filename}"
 
-    print("current_user:", current_user)
-    print("current_user.id:", current_user.id)
-
     service = MessageService(db)
     message = service.create_message(
         user_id=current_user.id,
@@ -88,8 +85,11 @@ async def create_message(
     # message_dict = MessageSchema.from_orm(message).dict(exclude={"conversation"})
     # await sio.emit('new_message', message_dict, room=f"conversation_{conversation_id}")
     
+    # Emit user message to WebSocket clients
+    await emit_message_to_clients(message, current_user, db)
+    
     # Wait for thse system response to be generated
-    await system_response(
+    await generate_system_response(
         user_message=content,
         conversation_id=message.conversation_id, # Use the conversation_id from the saved message! to avoid creating a new conversation
         db=db,
@@ -99,8 +99,35 @@ async def create_message(
 
     return message
 
+
+async def emit_message_to_clients(message, current_user: User, db: Session):
+    """Emit message to WebSocket clients in the conversation room"""
+    try:
+        # Convert message to dict for emission
+        message_data = {
+            "id": message.id,
+            "conversation_id": message.conversation_id,
+            "content": message.content,
+            "is_systen": message.is_systen,  # Note: keeping your field name
+            "file_path": message.file_path,
+            "sent_at": message.sent_at.isoformat(),
+            "user": {
+                "id": None if message.is_systen else current_user.id,  # If it's a system message, user_id is None
+            }
+        }
+
+        # Emit to conversation room
+        room_name = f"conversation_{message.conversation_id}"
+        await sio.emit('new_message', message_data, room=room_name)
+        
+        print(f"Emitted message to room: {room_name}")
+
+    except Exception as e:
+        print(f"Error emitting message: {str(e)}")
+
+
 # Example system_response function
-async def system_response(user_message: str, conversation_id: int, db: Session, sio, current_user: User):
+async def generate_system_response(user_message: str, conversation_id: int, db: Session, sio, current_user: User):
     """
     Calls n8n to get a system response, saves it as a message, and emits it.
     """
@@ -126,7 +153,7 @@ async def system_response(user_message: str, conversation_id: int, db: Session, 
     # Save the system message
     service = MessageService(db)
     system_message = service.create_message(
-        user_id=current_user.id,  # or a system user id
+        user_id=None,  # or a system user id
         content=system_content,
         is_systen=True,
         file_path=None,

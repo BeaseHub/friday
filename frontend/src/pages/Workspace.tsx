@@ -110,8 +110,19 @@ const Workspace = () => {
       auth: { token }
     });
 
+    socketRef.current.on("connect", () => {
+      console.log("Socket.IO connected!");
+    });
+
+
+    // Handle disconnect / close event
+    socketRef.current.on("disconnect", (reason) => {
+      console.log("Socket.IO disconnected. Reason:", reason);
+    });
+
     // Listen for new messages
     socketRef.current.on('new_message', (message) => {
+      console.log('New message received:', message);
       dispatch(addMessageToConversation({
         conversationId: message.conversation_id,
         message,
@@ -134,6 +145,12 @@ const Workspace = () => {
         file: msg.file_path ? `${API_URL}/${msg.file_path.replace(/^\/+/, '')}` : null,
         sentAt: format(new Date(msg.sent_at), 'yyyy-MM-dd HH:mm:ss')
       })));
+
+      if (socketRef.current && selectedConversation) {
+        socketRef.current.emit("join", {
+          room: `conversation_${selectedConversation.id}`,
+        });
+      }
     }
     console.log(messages);
   }, [selectedConversation]);

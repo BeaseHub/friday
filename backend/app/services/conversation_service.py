@@ -9,7 +9,12 @@ class ConversationService:
         return self.db.query(Conversation).all()
     
     def get_conversations_by_user(self, user_id: int):
-        return self.db.query(Conversation).filter(Conversation.user_id == user_id).all()
+        return (
+            self.db.query(Conversation)
+            .filter(Conversation.user_id == user_id)
+            .order_by(Conversation.created_at.desc())
+            .all()
+        )
 
     def get_conversation(self, conversation_id: int):
         return self.db.query(Conversation).filter(Conversation.id == conversation_id).first()

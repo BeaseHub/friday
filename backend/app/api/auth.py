@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status,  UploadFile, File
 from sqlalchemy.orm import Session
 from app.services.user_service import UserService
 from app.db.database import get_db
-from app.schemas.user import UserCreate, User, UserUpdate, ChangePassword
+from app.schemas.user import UserCreate, User, UserUpdate, ChangePassword, UserWithToken
 from jose import jwt, JWTError
 from datetime import timedelta, datetime
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
@@ -165,7 +165,7 @@ def change_password(
         service.change_password(current_user, change.new_password)
         return {"msg": "Password updated"}
 
-@router.patch("/update-profile", response_model=User)
+@router.patch("/update-profile", response_model=UserWithToken)
 async def update_profile(
     first_name: str = Form(None),
     last_name: str = Form(None),
@@ -197,5 +197,18 @@ async def update_profile(
         with open(file_location, "wb") as f:
             f.write(await profile_picture.read())
         update_data["profile_picture_path"] = f"{UPLOAD_DIR}/{filename}"
-    return service.update_profile(user, **update_data)
+    
+    updated_user= service.update_profile(user, **update_data)
 
+    if not updated_user:
+        raise HTTPException(status_code=400, detail="Failed to update profile") 
+    
+    # Generate a new token
+    token_data = {"sub": updated_user.email, "exp": datetime.utcnow() + timedelta(hours=24)}
+    token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
+
+    return {
+        "user": updated_user,
+        "access_token": token,
+        "token_type": "bearer"
+    }

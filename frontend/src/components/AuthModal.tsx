@@ -115,159 +115,159 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
 
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!validateForm()) return;
+    if (!validateForm()) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    if (mode === 'login') {
-      // Call login API
-      const result = await loginApi(formData.email, formData.password);
-      console.log(result);
-      const user = result.data.user; // Assuming the API returns user data
-      if(result.status == 200 ||  result.statusText === 'OK') {
-        // Save token, update Redux, etc.
-        dispatch(
-          login({
-            id: String(user.id),
-            firstName: user.first_name,
-            lastName: user.last_name,
-            email: user.email,
-            phoneNumber: user.phone_number,
-            profilePicturePath: user.profile_picture_path ?? '',
-            initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
-            role: user.type,
-            token: result.data.access_token, // if your slice or storage uses it
-          })
-        );
-              // Show success toast
+    try {
+      if (mode === 'login') {
+        // Call login API
+        const result = await loginApi(formData.email, formData.password);
+        console.log(result);
+        const user = result.data.user; // Assuming the API returns user data
+        if(result.status == 200 ||  result.statusText === 'OK') {
+          // Save token, update Redux, etc.
+          dispatch(
+            login({
+              id: String(user.id),
+              firstName: user.first_name,
+              lastName: user.last_name,
+              email: user.email,
+              phoneNumber: user.phone_number,
+              profilePicturePath: user.profile_picture_path ?? '',
+              initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
+              role: user.type,
+              token: result.data.access_token, // if your slice or storage uses it
+            })
+          );
+                // Show success toast
+          toast({
+            title: "Welcome back!",
+            description: "You have successfully logged in.",
+          });
+          onClose();
+        }
+      } else if (mode === 'update') {
+        // Prepare FormData for profile update
+        const form = new FormData();
+        form.append('first_name', formData.firstName);
+        form.append('last_name', formData.lastName);
+        form.append('phone_number', formData.phoneNumber);
+        if (formData.profilePicture) {
+          form.append('profile_picture', formData.profilePicture);
+        }
+        // Optionally: form.append('is_active', formData.isActive);
+
+        // Call updateProfile API (make sure to pass the token)
+        const result = await updateProfile(form, token);
+
+        if (result.status === 200 || result.statusText === 'OK') {
+          const response = result.data; // Assuming the API returns user data
+          // Save token, update Redux, etc.
+          dispatch(
+            login({
+              id: String(response.user.id),
+              firstName: response.user.first_name,
+              lastName: response.user.last_name,
+              email: response.user.email,
+              phoneNumber: response.user.phone_number,
+              profilePicturePath: response.user.profile_picture_path ?? '',
+              initials: `${response.user.first_name?.[0] ?? ''}${response.user.last_name?.[0] ?? ''}`.toUpperCase(),
+              role: response.user.type,
+              token: response.access_token, // if your slice or storage uses it
+            })
+          );
+          // Show success toast
+          toast({
+            title: "Profile updated!",
+            description: "Your profile information has been updated.",
+          });
+          // Optionally update Redux/localStorage with new user info
+          onClose();
+        } else {
+          toast({
+            title: "Update failed",
+            description: "Please check your inputs and try again.",
+            variant: "destructive",
+          });
+        }
+      } else if (mode === 'changePassword') {
+        // Prepare payload for password change
+        const payload = {
+          old_password: formData.password,      // or formData.oldPassword if you use that field
+          new_password: formData.confirmPassword, // or formData.newPassword if you use that field
+          email: user.email
+        };
+
+        console.log(payload, token);
+        // Call changePassword API (make sure to pass the token if required)
+        const result = await changePassword(payload, token);
+        console.log(result);
+
+        if (result?.status === 200 || result?.statusText=== 'OK') {
+          toast({
+            title: "Password changed!",
+            description: "Your password has been updated.",
+          });
+          onClose();
+        } else {
+          toast({
+            title: "Password change failed",
+            description: "Please check your inputs and try again.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        // Prepare FormData for signup
+        const form = new FormData();
+        form.append('email', formData.email);
+        form.append('password', formData.password);
+        form.append('first_name', formData.firstName);
+        form.append('last_name', formData.lastName);
+        form.append('phone_number', formData.phoneNumber);
+        if (formData.profilePicture) {
+          form.append('profile_picture', formData.profilePicture);
+        }
+        // Call signup API
+      const result = await signup(form);
+
+      if (result?.statusText === 'OK') {
         toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
+          title: "Account created!",
+          description: "Welcome to Friday AI Platform.",
         });
-        onClose();
-      }
-    } else if (mode === 'update') {
-      // Prepare FormData for profile update
-      const form = new FormData();
-      form.append('first_name', formData.firstName);
-      form.append('last_name', formData.lastName);
-      form.append('phone_number', formData.phoneNumber);
-      if (formData.profilePicture) {
-        form.append('profile_picture', formData.profilePicture);
-      }
-      // Optionally: form.append('is_active', formData.isActive);
-
-      // Call updateProfile API (make sure to pass the token)
-      const result = await updateProfile(form, token);
-
-      if (result.status === 200 || result.statusText === 'OK') {
-        const user = result.data; // Assuming the API returns user data
-        // Save token, update Redux, etc.
-        dispatch(
-          login({
-            id: String(user.id),
-            firstName: user.first_name,
-            lastName: user.last_name,
-            email: user.email,
-            phoneNumber: user.phone_number,
-            profilePicturePath: user.profile_picture_path ?? '',
-            initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
-            role: user.type,
-            token: result.data.access_token, // if your slice or storage uses it
-          })
-        );
-        // Show success toast
-        toast({
-          title: "Profile updated!",
-          description: "Your profile information has been updated.",
-        });
-        // Optionally update Redux/localStorage with new user info
-        onClose();
+        onToggleMode(); // Switch to login mode after signup
       } else {
         toast({
-          title: "Update failed",
+          title: "Signup failed",
           description: "Please check your inputs and try again.",
-          variant: "destructive",
+          variant: "destructive", // optional styling
         });
       }
-    } else if (mode === 'changePassword') {
-      // Prepare payload for password change
-      const payload = {
-        old_password: formData.password,      // or formData.oldPassword if you use that field
-        new_password: formData.confirmPassword, // or formData.newPassword if you use that field
-        email: user.email
-      };
-
-      console.log(payload, token);
-      // Call changePassword API (make sure to pass the token if required)
-      const result = await changePassword(payload, token);
-      console.log(result);
-
-      if (result?.status === 200 || result?.statusText=== 'OK') {
-        toast({
-          title: "Password changed!",
-          description: "Your password has been updated.",
-        });
-        onClose();
-      } else {
-        toast({
-          title: "Password change failed",
-          description: "Please check your inputs and try again.",
-          variant: "destructive",
-        });
       }
-    } else {
-      // Prepare FormData for signup
-      const form = new FormData();
-      form.append('email', formData.email);
-      form.append('password', formData.password);
-      form.append('first_name', formData.firstName);
-      form.append('last_name', formData.lastName);
-      form.append('phone_number', formData.phoneNumber);
-      if (formData.profilePicture) {
-        form.append('profile_picture', formData.profilePicture);
-      }
-      // Call signup API
-    const result = await signup(form);
-
-    if (result?.statusText === 'OK') {
-      toast({
-        title: "Account created!",
-        description: "Welcome to Friday AI Platform.",
+      // Reset form and close modal
+      setFormData({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+        password: '',
+        confirmPassword: '',
+        profilePicturePath: '',
+        profilePicture: null,
       });
-      onToggleMode(); // Switch to login mode after signup
-    } else {
+    } catch (error: any) {
       toast({
-        title: "Signup failed",
-        description: "Please check your inputs and try again.",
-        variant: "destructive", // optional styling
+        title: "Error",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
-    }
-    // Reset form and close modal
-    setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phoneNumber: '',
-      password: '',
-      confirmPassword: '',
-      profilePicturePath: '',
-      profilePicture: null,
-    });
-  } catch (error: any) {
-    toast({
-      title: "Error",
-      description: error.message || "Something went wrong. Please try again.",
-      variant: "destructive",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   if (!open) return null;
 

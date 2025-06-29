@@ -74,6 +74,9 @@ async def create_message(
             f_out.write(await file.read())
         file_path = f"{UPLOAD_DIR}/{filename}"
 
+    print("current_user:", current_user)
+    print("current_user.id:", current_user.id)
+
     service = MessageService(db)
     message = service.create_message(
         user_id=current_user.id,
@@ -88,15 +91,16 @@ async def create_message(
     # Wait for thse system response to be generated
     await system_response(
         user_message=content,
-        conversation_id=conversation_id,
+        conversation_id=message.conversation_id, # Use the conversation_id from the saved message! to avoid creating a new conversation
         db=db,
-        sio=sio
+        sio=sio,
+        current_user=current_user,
     )
 
     return message
 
 # Example system_response function
-async def system_response(user_message: str, conversation_id: int, db: Session, sio):
+async def system_response(user_message: str, conversation_id: int, db: Session, sio, current_user: User):
     """
     Calls n8n to get a system response, saves it as a message, and emits it.
     """
@@ -122,14 +126,12 @@ async def system_response(user_message: str, conversation_id: int, db: Session, 
     # Save the system message
     service = MessageService(db)
     system_message = service.create_message(
-        user_id=None,  # or a system user id
+        user_id=current_user.id,  # or a system user id
         content=system_content,
         is_systen=True,
         file_path=None,
         conversation_id=conversation_id
     )
-
-    print(f"System response saved: {system_content}")
 
     # system_message_dict = MessageSchema.from_orm(system_message).dict(exclude={"conversation"})
     # await sio.emit('new_message', system_message_dict, room=f"conversation_{conversation_id}")

@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { io, Socket } from 'socket.io-client';
 import Draggable from 'react-draggable';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { AnimatedSendingDots } from '@/components/ui/animated-sending-dots';
 
 declare global {
   namespace JSX {
@@ -28,6 +29,7 @@ declare global {
 
 const Workspace = () => {
   const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [selectedAgent, setSelectedAgent] = useState('Creative Canvas');
   const [recording, setRecording] = useState(false);
@@ -169,6 +171,7 @@ const Workspace = () => {
 
   const handleSend = async () => {
     if (message.trim()) {
+      setSending(true); // Start loading
       const { userId, token } = getAuthUserAndToken();
       // You need to know the current conversation ID; replace `currentConversationId` accordingly
       const currentConversationId = selectedConversation?.id; // <-- Replace with actual selected conversation ID
@@ -181,6 +184,8 @@ const Workspace = () => {
       } catch (error) {
         console.error('Error sending message:', error);
         // Optionally: show a toast or error message to the user
+      }finally{
+        setSending(false); // Stop loading
       }
     }
   };
@@ -203,7 +208,10 @@ const Workspace = () => {
   return (
     <div className={`h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
       {/* Eleven lab widget */}
-      <div className="flex justify-center p-4 bg-white shadow-sm">
+      {/* <div className="flex justify-center p-4 bg-white shadow-sm">
+        <elevenlabs-convai agent-id="3AV2tYqySsT8uWSEV2ay"></elevenlabs-convai>
+      </div> */}
+      <div >
         <elevenlabs-convai agent-id="3AV2tYqySsT8uWSEV2ay"></elevenlabs-convai>
       </div>
 
@@ -557,6 +565,7 @@ const Workspace = () => {
                 <Textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
+                  disabled={sending}
                   onKeyPress={handleKeyPress}
                   placeholder={`Type your message to your agents...`}
                   className={`min-h-[50px] resize-none border pr-12 focus:ring-2 ${
@@ -565,6 +574,15 @@ const Workspace = () => {
                       : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-500 focus:ring-orange-500 focus:border-orange-500'
                   }`}
                 />
+
+                {/* Animated sending indicator */}
+                {sending && (
+                  <div className="absolute left-3 bottom-2 flex items-center text-xs select-none">
+                    <span className={isDarkMode ? "text-orange-300" : "text-orange-600"}>Searching</span>
+                    <AnimatedSendingDots isDarkMode={isDarkMode} />
+                  </div>
+                )}
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -586,10 +604,18 @@ const Workspace = () => {
               
               <Button
                 onClick={handleSend}
-                disabled={!message.trim()}
+                disabled={!message.trim() || sending}
                 className="h-[50px] px-6 disabled:opacity-50 bg-orange-500 text-white hover:bg-orange-600"
               >
-                <Send className="w-4 h-4" />
+                {sending ? (
+                  // You can use any spinner icon here, e.g. a simple CSS spinner or a library spinner
+                  <svg className="animate-spin h-4 w-4 mr-1" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </Button>
             </div>
             

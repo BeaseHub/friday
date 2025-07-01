@@ -51,6 +51,9 @@ const Workspace = () => {
 
   const socketRef = useRef<Socket | null>(null);
 
+  // Add this at the top of your component
+  const wsRef = useRef<WebSocket | null>(null);
+
   const API_URL = import.meta.env.VITE_API_URL;
 
   const getAuthUserAndToken = () => {
@@ -103,58 +106,116 @@ const Workspace = () => {
     fetchConversations();
   }, []);
 
-  useEffect(() => {
-    const { token } = getAuthUserAndToken();
-    if (!token) return;
+  // useEffect(() => {
+  //   const { token } = getAuthUserAndToken();
+  //   if (!token) return;
 
-    // Connect to Socket.IO server
-    socketRef.current = io(import.meta.env.VITE_API_URL, {
-      auth: { token }
-    });
+  //   // Connect to Socket.IO server
+  //   socketRef.current = io(import.meta.env.VITE_API_URL, {
+  //     auth: { token }
+  //   });
 
-    socketRef.current.on("connect", () => {
-      console.log("Socket.IO connected!");
-    });
+  //   socketRef.current.on("connect", () => {
+  //     console.log("Socket.IO connected!");
+  //   });
 
 
-    // Handle disconnect / close event
-    socketRef.current.on("disconnect", (reason) => {
-      console.log("Socket.IO disconnected. Reason:", reason);
-    });
+  //   // Handle disconnect / close event
+  //   socketRef.current.on("disconnect", (reason) => {
+  //     console.log("Socket.IO disconnected. Reason:", reason);
+  //   });
 
-    // Listen for new messages
-    socketRef.current.on('new_message', (message) => {
-      console.log('New message received:', message);
-      dispatch(addMessageToConversation({
-        conversationId: message.conversation_id,
-        message,
-      }));
-    });
+  //   // Listen for new messages
+  //   socketRef.current.on('new_message', (message) => {
+  //     console.log('New message received:', message);
+  //     dispatch(addMessageToConversation({
+  //       conversationId: message.conversation_id,
+  //       message,
+  //     }));
+  //   });
 
-    // Cleanup on unmount
-    return () => {
-      socketRef.current?.disconnect();
-    };
-    // eslint-disable-next-line
-  }, []);
+  //   socketRef.current?.onAny((event, ...args) => {
+  //     console.log("Socket event:", event, args);
+  //   });
+
+
+  //   // Cleanup on unmount
+  //   return () => {
+  //     socketRef.current?.disconnect();
+  //   };
+  //   // eslint-disable-next-line
+  // }, []);
 
   //update the messages in the view when a new conversation is selected
+  // useEffect(() => {
+  //   if (selectedConversation) {
+  //     setMessages(selectedConversation.messages.map(msg => ({
+  //       sender: msg.is_systen ? 'system' : selectedConversation.user_id === getAuthUserAndToken().userId ? 'user' : 'Unknonwn',
+  //       content: msg.content,
+  //       file: msg.file_path ? `${API_URL}/${msg.file_path.replace(/^\/+/, '')}` : null,
+  //       sentAt: format(new Date(msg.sent_at), 'yyyy-MM-dd HH:mm:ss')
+  //     })));
+
+  //     if (socketRef.current && selectedConversation) {
+  //       console.log("Joining room for conversation:", `conversation_${selectedConversation.id}`);
+  //       socketRef.current.emit("join", {
+  //         room: `conversation_${selectedConversation.id}`,
+  //       });
+  //     }
+  //   }
+  // }, [selectedConversation]);
+
+  
   useEffect(() => {
-    if (selectedConversation) {
-      setMessages(selectedConversation.messages.map(msg => ({
+    if (!selectedConversation) return;
+
+    setMessages(selectedConversation.messages.map(msg => ({
         sender: msg.is_systen ? 'system' : selectedConversation.user_id === getAuthUserAndToken().userId ? 'user' : 'Unknonwn',
         content: msg.content,
         file: msg.file_path ? `${API_URL}/${msg.file_path.replace(/^\/+/, '')}` : null,
         sentAt: format(new Date(msg.sent_at), 'yyyy-MM-dd HH:mm:ss')
       })));
 
-      if (socketRef.current && selectedConversation) {
-        socketRef.current.emit("join", {
-          room: `conversation_${selectedConversation.id}`,
-        });
-      }
+    // Close previous WebSocket if any
+    if (wsRef.current) {
+      wsRef.current.close();
     }
-    console.log(messages);
+
+    // Connect to the WebSocket room for the selected conversation
+    const ws = new WebSocket(`${API_URL.replace(/^http/, 'ws')}/ws/conversation_${selectedConversation.id}`);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("WebSocket connected to room:", `conversation_${selectedConversation.id}`);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        console.log('New message received:', message);
+        dispatch(addMessageToConversation({
+          conversationId: message.conversation_id,
+          message,
+        }));
+      } catch {
+        // If not JSON, just log
+        console.log('Raw message:', event.data);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket disconnected from room:", `conversation_${selectedConversation.id}`);
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    // Cleanup on unmount or conversation change
+    return () => {
+      ws.close();
+    };
+  // eslint-disable-next-line
   }, [selectedConversation]);
 
   // Auto-scroll to bottom when messages change
@@ -178,7 +239,17 @@ const Workspace = () => {
 
       try {
         await createMessage(message, currentConversationId, token, file);
-        // Optionally: refresh messages or update UI here
+      
+        // Refresh conversation list SO WE CAN GET the updated messages from the websocket using the dedicated conversation room
+        const updated = await getConversationsByUser(userId, token);
+        dispatch(setConversations(updated));
+
+        // If no conversation was selected, try selecting the latest one
+        if (!selectedConversation) {
+          const latestConv = updated[0]; // You may sort/filter based on created_at
+          dispatch(setSelectedConversation(latestConv));
+        }
+
         setMessage('');
         setFile(null);
       } catch (error) {

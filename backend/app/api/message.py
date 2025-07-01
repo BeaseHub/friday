@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
+import asyncio
+import json
+from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form,WebSocket,WebSocketDisconnect
 from sqlalchemy.orm import Session
 from app.schemas.message import Message, MessageCreate, MessageUpdate
 from app.services.message_service import MessageService
@@ -7,12 +9,12 @@ from app.db.database import get_db
 from app.schemas.user import User  # Import User schema if needed for authentication
 from app.api.auth import get_current_user  # Import the dependency to get the current user
 
-from app.socket_manager import sio  # Import the SocketManager instance
 from typing import Optional
 from uuid import uuid4
 from app.schemas.message import Message as MessageSchema
 import os
 import httpx
+from app.websocket_manager import ws_manager    # Import the WebSocket manager
 
 router = APIRouter()
 
@@ -46,6 +48,18 @@ def get_message(
     if not conversation or (conversation.user_id != current_user.id and current_user.type != "admin"):
         raise HTTPException(status_code=403, detail="Not authorized to access this message")
     return message
+
+
+@router.websocket("/ws/{room_name}")
+async def websocket_endpoint(websocket: WebSocket, room_name: str):
+    await ws_manager.connect(websocket, room_name)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # Optionally, echo or process incoming messages
+            await ws_manager.broadcast(room_name, data)
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket, room_name)
 
 @router.post("/messages", response_model=Message)
 async def create_message(
@@ -82,29 +96,8 @@ async def create_message(
         file_path=file_path,
         conversation_id=conversation_id
     )
-    # message_dict = MessageSchema.from_orm(message).dict(exclude={"conversation"})
-    # await sio.emit('new_message', message_dict, room=f"conversation_{conversation_id}")
-    
-    # Emit user message to WebSocket clients
-    await emit_message_to_clients(message, current_user, db)
-    
-    # Wait for thse system response to be generated
-    await generate_system_response(
-        user_message=content,
-        conversation_id=message.conversation_id, # Use the conversation_id from the saved message! to avoid creating a new conversation
-        db=db,
-        sio=sio,
-        current_user=current_user,
-    )
 
-    return message
-
-
-async def emit_message_to_clients(message, current_user: User, db: Session):
-    """Emit message to WebSocket clients in the conversation room"""
-    try:
-        # Convert message to dict for emission
-        message_data = {
+    message_data = {
             "id": message.id,
             "conversation_id": message.conversation_id,
             "content": message.content,
@@ -114,23 +107,33 @@ async def emit_message_to_clients(message, current_user: User, db: Session):
             "user": {
                 "id": None if message.is_systen else current_user.id,  # If it's a system message, user_id is None
             }
-        }
+    }
 
-        # Emit to conversation room
-        room_name = f"conversation_{message.conversation_id}"
-        await sio.emit('new_message', message_data, room=room_name)
-        
-        print(f"Emitted message to room: {room_name}")
+    room_name = f"conversation_{message.conversation_id}"
+    print("[WS] Emitting user message")
+    await ws_manager.broadcast(room_name, json.dumps(message_data))  # or send JSON if you want
+    
 
-    except Exception as e:
-        print(f"Error emitting message: {str(e)}")
+    
+    # Wait for thse system response to be generated
+    await generate_system_response(
+        user_message=content,
+        conversation_id=message.conversation_id, # Use the conversation_id from the saved message! to avoid creating a new conversation
+        db=db,
+        current_user=current_user,
+    )
+
+    return message
+
 
 
 # Example system_response function
-async def generate_system_response(user_message: str, conversation_id: int, db: Session, sio, current_user: User):
+async def generate_system_response(user_message: str, conversation_id: int, db: Session, current_user: User):
     """
     Calls n8n to get a system response, saves it as a message, and emits it.
     """
+
+    system_content = "This is a system-generated response based on the user message."
 
     # Call your n8n webhook or API to get the system response
     async with httpx.AsyncClient(timeout=20.0) as client:
@@ -143,16 +146,12 @@ async def generate_system_response(user_message: str, conversation_id: int, db: 
         print("n8n response text:", n8n_response.text)
 
         system_content = n8n_response.text
-        # try:
-        #     n8n_data = n8n_response.json()
-        #     system_content = n8n_data.get("response", "No response from system.")
-        # except Exception as e:
-        #     system_content = f"System error: {str(e)} | n8n said: {n8n_response.text}"
+
 
 
     # Save the system message
     service = MessageService(db)
-    system_message = service.create_message(
+    message = service.create_message(
         user_id=None,  # or a system user id
         content=system_content,
         is_systen=True,
@@ -160,8 +159,22 @@ async def generate_system_response(user_message: str, conversation_id: int, db: 
         conversation_id=conversation_id
     )
 
-    # system_message_dict = MessageSchema.from_orm(system_message).dict(exclude={"conversation"})
-    # await sio.emit('new_message', system_message_dict, room=f"conversation_{conversation_id}")
+    message_data = {
+            "id": message.id,
+            "conversation_id": message.conversation_id,
+            "content": system_content,
+            "is_systen": True,  # Note: keeping your field name
+            "file_path": message.file_path,
+            "sent_at": message.sent_at.isoformat(),
+            "user": {
+                "id": None if message.is_systen else current_user.id,  # If it's a system message, user_id is None
+            }
+    }
+
+    print("[WS] Emitting system message")
+    room_name = f"conversation_{message.conversation_id}"
+    await asyncio.sleep(0.1)  # Simulate some delay for the system response generation
+    await ws_manager.broadcast(room_name, json.dumps(message_data))  # or send JSON if you want
 
 @router.put("/messages/{message_id}", response_model=Message)
 def update_message(

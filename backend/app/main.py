@@ -7,16 +7,11 @@ from fastapi.staticfiles import StaticFiles
 import os
 from fastapi import FastAPI
 
-from app.socket_manager import sio, socket_app
-
 app = FastAPI()
-# sio = SocketManager(app=app)  # Initialize with app here
 
 os.makedirs("uploads/messages", exist_ok=True)
 os.makedirs("uploads/profiles", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
-app.mount("/socket.io", socket_app)
 
 app.add_middleware(
     CORSMiddleware,

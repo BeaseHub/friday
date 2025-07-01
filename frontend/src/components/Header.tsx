@@ -87,6 +87,24 @@ const Header = () => {
 
   const t = translations[currentLanguage];
 
+  const [notifications, setNotifications] = useState([
+  {
+    id: 1,
+    title: "New message from Friday",
+    message: "Click to open your latest conversation.",
+    link: "/workspace",
+     time: new Date().toISOString()  // or a fixed string for testing
+  },
+  {
+    id: 2,
+    title: "Subscription activated",
+    message: "Your subscription to Pro Plan is now active.",
+    link: "/explore?subscription=true",
+    time: new Date().toISOString()
+  },
+  // Add more...
+]);
+
   return (
     <>
       <header className="flex items-center justify-between p-6 bg-transparent backdrop-blur-sm">
@@ -98,10 +116,45 @@ const Header = () => {
         </div>
         
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="icon" className="relative hover:bg-white/20 text-white">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-3 w-3 bg-white rounded-full"></span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative hover:bg-white/20 text-white">
+                <Bell className="h-5 w-5" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 h-3 w-3 bg-white rounded-full"></span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto bg-white border border-gray-200 shadow-lg">
+              <div className="text-sm font-semibold px-4 py-2 border-b border-gray-100 text-gray-700">
+                Notifications
+              </div>
+
+              {notifications.length === 0 ? (
+                <div className="text-gray-500 px-4 py-4 text-sm">No notifications</div>
+              ) : (
+                notifications.slice(0, 5).map((notif) => (
+                  <DropdownMenuItem
+                    key={notif.id}
+                    onClick={() => navigate(notif.link)}
+                    className="flex flex-col items-start gap-1 text-sm text-left text-gray-700 hover:bg-orange-50 cursor-pointer px-4 py-2"
+                  >
+                    <div className="font-semibold text-gray-900 truncate w-full">
+                      {notif.title}
+                    </div>
+                    <div className="text-gray-600 text-xs line-clamp-2 w-full overflow-hidden text-ellipsis break-words">
+                      {notif.message}
+                    </div>
+                    <div className="text-[10px] text-gray-400 mt-1 self-end text-right">
+                      {new Date(notif.time).toLocaleString()} {/* Or use date-fns format() */}
+                    </div>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

@@ -1,6 +1,6 @@
 # from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import home, agent, plan, conversation, message, subscription, payment, auth  # Import all routers
+from app.api import home, agent, plan, conversation, message, subscription, payment, auth, eleven_lab  # Import all routers
 # from app.api import auth  # Uncomment if you have an auth router
 import uvicorn
 from fastapi.staticfiles import StaticFiles
@@ -29,6 +29,7 @@ app.include_router(message.router)
 app.include_router(subscription.router)
 app.include_router(payment.router)
 app.include_router(auth.router)
+app.include_router(eleven_lab.router)
 
 
 @app.get("/")

@@ -22,31 +22,29 @@ const Index = () => {
   const [userAgents, setUserAgents] = useState([]);
 
   useEffect(() => {
+    // Animated text interval
     const interval = setInterval(() => {
       setCurrentTextIndex((prev) => (prev + 1) % animatedTexts.length);
     }, 4000);
+
+    // Fetch agents for user subscriptions
+    const fetchAgents = async () => {
+      try {
+        const userSubscriptions = await getActiveSubscriptionsByUser();
+        const userSubscription = userSubscriptions?.[0] || null;
+        setUserAgents(userSubscription?.agents || []);
+        console.log("User Agents:", userSubscription?.agents);
+      } catch (error) {
+        setUserAgents([]);
+      }
+    };
+
+    fetchAgents();
+
+    // Cleanup
     return () => clearInterval(interval);
   }, []);
 
-   useEffect(() => {
-      const fetchAgents = async () => {
-            try {
-              // Fetch active agents from the users subscription
-              const userSubscriptions  = await getActiveSubscriptionsByUser();
-              const userSubscription = userSubscriptions ?.[0] || null;
-              setUserAgents(userSubscription?.agents || []);
-    
-            } catch (error) {
-              // Optionally handle error (toast, etc.)
-              setUserAgents([]);
-            } finally {
-              // Optionally handle error (toast, etc.)
-              setUserAgents([]);
-            }
-        };
-  
-      fetchAgents();
-    }, []);
 
   const handleWorkspaceClick = () => {
     // Redirect to workspace if authenticated and user has at least one agent

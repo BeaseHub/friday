@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface Agent {
   id: string;
+  eleven_labs_id: string; // Unique identifier for Eleven Labs agent
   name: string;
   price: number;
   description?: string;

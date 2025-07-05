@@ -31,16 +31,18 @@ const Workspace = () => {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  const [selectedAgent, setSelectedAgent] = useState('Creative Canvas');
+  const [activeAgent,setActiveAgent] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
    const [sidebarOpen, setSidebarOpen] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const { conversations, selectedConversation } = useAppSelector((state) => state.chat);
-  const { agents,filteredAgents, selectedAgents} = useAppSelector((state) => state.agent);  
+  const { agents} = useAppSelector((state) => state.agent);  
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+
 
   // Add this ref for the chat scroll area
   const chatScrollRef = useRef<HTMLDivElement>(null);
@@ -49,7 +51,6 @@ const Workspace = () => {
     { sender: string; content: string; file?: File | string | null; sentAt: string }[]
   >([]);
 
-  const socketRef = useRef<Socket | null>(null);
 
   // Add this at the top of your component
   const wsRef = useRef<WebSocket | null>(null);
@@ -105,66 +106,6 @@ const Workspace = () => {
     fetchAgents();
     fetchConversations();
   }, []);
-
-  // useEffect(() => {
-  //   const { token } = getAuthUserAndToken();
-  //   if (!token) return;
-
-  //   // Connect to Socket.IO server
-  //   socketRef.current = io(import.meta.env.VITE_API_URL, {
-  //     auth: { token }
-  //   });
-
-  //   socketRef.current.on("connect", () => {
-  //     console.log("Socket.IO connected!");
-  //   });
-
-
-  //   // Handle disconnect / close event
-  //   socketRef.current.on("disconnect", (reason) => {
-  //     console.log("Socket.IO disconnected. Reason:", reason);
-  //   });
-
-  //   // Listen for new messages
-  //   socketRef.current.on('new_message', (message) => {
-  //     console.log('New message received:', message);
-  //     dispatch(addMessageToConversation({
-  //       conversationId: message.conversation_id,
-  //       message,
-  //     }));
-  //   });
-
-  //   socketRef.current?.onAny((event, ...args) => {
-  //     console.log("Socket event:", event, args);
-  //   });
-
-
-  //   // Cleanup on unmount
-  //   return () => {
-  //     socketRef.current?.disconnect();
-  //   };
-  //   // eslint-disable-next-line
-  // }, []);
-
-  //update the messages in the view when a new conversation is selected
-  // useEffect(() => {
-  //   if (selectedConversation) {
-  //     setMessages(selectedConversation.messages.map(msg => ({
-  //       sender: msg.is_systen ? 'system' : selectedConversation.user_id === getAuthUserAndToken().userId ? 'user' : 'Unknonwn',
-  //       content: msg.content,
-  //       file: msg.file_path ? `${API_URL}/${msg.file_path.replace(/^\/+/, '')}` : null,
-  //       sentAt: format(new Date(msg.sent_at), 'yyyy-MM-dd HH:mm:ss')
-  //     })));
-
-  //     if (socketRef.current && selectedConversation) {
-  //       console.log("Joining room for conversation:", `conversation_${selectedConversation.id}`);
-  //       socketRef.current.emit("join", {
-  //         room: `conversation_${selectedConversation.id}`,
-  //       });
-  //     }
-  //   }
-  // }, [selectedConversation]);
-
   
   useEffect(() => {
     if (!selectedConversation) return;
@@ -230,6 +171,10 @@ const Workspace = () => {
     return null;
   }
 
+  const selectActiveAgent = (agentName: string) => {
+
+  }
+
   const handleSend = async () => {
     if (message.trim()) {
       setSending(true); // Start loading
@@ -283,7 +228,7 @@ const Workspace = () => {
         <elevenlabs-convai agent-id="3AV2tYqySsT8uWSEV2ay"></elevenlabs-convai>
       </div> */}
       <div >
-        <elevenlabs-convai agent-id="3AV2tYqySsT8uWSEV2ay"></elevenlabs-convai>
+        <elevenlabs-convai agent-id={activeAgent?.eleven_labs_id}></elevenlabs-convai>
       </div>
 
       {/* Workspace Header */}
@@ -370,8 +315,12 @@ const Workspace = () => {
                 </h3>
 
                 <select
-                  value={selectedAgent}
-                  onChange={(e) => setSelectedAgent(e.target.value)}
+                  value={activeAgent?.id || ""}
+                  onChange={(e) => {
+                    const agent = agents.find((a) => a.id === parseInt(e.target.value));
+                    setActiveAgent(agent || null);
+                  }}
+                  disabled={agents.length === 0}
                   className={`w-full px-3 py-2 rounded-md border text-sm transition-colors outline-none
                     ${isDarkMode
                       ? 'bg-gray-800 text-white border-gray-600 focus:border-orange-500'
@@ -380,7 +329,7 @@ const Workspace = () => {
                 >
                   <option value="" disabled>View your assistant...</option>
                   {agents.map((agent) => (
-                    <option key={agent.id} value={agent.name}>
+                    <option key={agent.id} value={agent.id}>
                       {agent.name}
                     </option>
                   ))}

@@ -34,6 +34,7 @@ class Agent(Base):
     __tablename__ = "agents"
 
     id = Column(Integer, primary_key=True, index=True)
+    eleven_labs_id = Column(String(255), nullable=False, unique=True)  # Unique identifier for Eleven Labs agent
     name = Column(String(100), nullable=False)
     price = Column(Numeric(10, 2), nullable=False)
     description = Column(Text)

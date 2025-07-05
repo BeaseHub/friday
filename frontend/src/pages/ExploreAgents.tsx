@@ -34,6 +34,8 @@ const ExploreAgents = () => {
 
   const [loading, setLoading] = useState(true);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     const fetchAgents = async () => {
       setLoading(true);
@@ -193,7 +195,7 @@ const ExploreAgents = () => {
                       <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-gray-100">
                         {agent.image_path ? (
                           <img
-                            src={agent.image_path}
+                            src={agent.image_path ? `${API_URL}/${agent.image_path.replace(/^\/+/, '')}` : ''} 
                             alt={agent.name}
                             className="w-10 h-10 rounded-full object-cover"
                           />

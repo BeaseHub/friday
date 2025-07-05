@@ -43,27 +43,35 @@ async def create_agent(
     feature_list: Optional[str] = Form(None),  # Accept as JSON string if needed
     is_active: Optional[bool] = Form(True),
     image: UploadFile = File(None),
+    eleven_labs_id: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.type != "admin":
-        raise HTTPException(status_code=403, detail="Admin privileges required")
+    # if current_user.type != "admin":
+    #     raise HTTPException(status_code=403, detail="Admin privileges required")
     agent_data = {
         "name": name,
         "price": price,
         "description": description,
-        "is_active": is_active
+        "is_active": is_active,
+        "eleven_labs_id": eleven_labs_id,
     }
     # Handle feature_list if provided as JSON string
     if feature_list:
         agent_data["feature_list"] = json.loads(feature_list)
+
+
+
     # Handle image upload
     if image:
+        UPLOAD_DIR = "uploads/plans"
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
         filename = f"{uuid4()}_{image.filename}"
         file_location = os.path.join(UPLOAD_DIR, filename)
-        with open(file_location, "wb") as f:
-            f.write(await image.read())
-        agent_data["image_path"] = f"uploads/{filename}"
+        with open(file_location, "wb") as f_out:
+            f_out.write(await image.read())
+        agent_data["image_path"]  = f"{UPLOAD_DIR}/{filename}"
+
     service = AgentService(db)
     return service.create_agent(agent_data)
 
@@ -71,6 +79,7 @@ async def create_agent(
 @router.put("/agents/{agent_id}", response_model=Agent)
 async def update_agent(
     agent_id: int,
+    eleven_labs_id: Optional[str] = Form(None),
     name: Optional[str] = Form(None),
     price: Optional[float] = Form(None),
     description: Optional[str] = Form(None),
@@ -97,13 +106,19 @@ async def update_agent(
         agent_update["is_active"] = is_active
     if feature_list:
         agent_update["feature_list"] = json.loads(feature_list)
+    if eleven_labs_id is not None:
+        agent_update["eleven_labs_id"] = eleven_labs_id
     if image:
+        UPLOAD_DIR = "uploads/plans"
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
         filename = f"{uuid4()}_{image.filename}"
         file_location = os.path.join(UPLOAD_DIR, filename)
         with open(file_location, "wb") as f:
             f.write(await image.read())
-        agent_update["image_path"] = f"uploads/{filename}"
+        agent_update["image_path"] = f"{UPLOAD_DIR}/{filename}"
     return service.update_agent(agent, agent_update)
+
+        
 
 @router.delete("/agents/{agent_id}")
 def delete_agent(agent_id: int, db: Session = Depends(get_db),current_user: User = Depends(get_current_user)):

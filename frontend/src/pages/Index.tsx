@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Computer, Brain, MessageSquare, Search, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
-import { useAppSelector } from '@/hooks/useRedux';
+import { useAppSelector,useAppDispatch } from '@/hooks/useRedux';
+import {getActiveSubscriptionsByUser} from '@/api/subscriptionApi';
+
 
 const animatedTexts = [
   "Multipliez vos revenus par 10",
@@ -16,6 +18,8 @@ const Index = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
+  const dispatch = useAppDispatch();
+  const [userAgents, setUserAgents] = useState([]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,8 +28,29 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
+   useEffect(() => {
+      const fetchAgents = async () => {
+            try {
+              // Fetch active agents from the users subscription
+              const userSubscriptions  = await getActiveSubscriptionsByUser();
+              const userSubscription = userSubscriptions ?.[0] || null;
+              setUserAgents(userSubscription?.agents || []);
+    
+            } catch (error) {
+              // Optionally handle error (toast, etc.)
+              setUserAgents([]);
+            } finally {
+              // Optionally handle error (toast, etc.)
+              setUserAgents([]);
+            }
+        };
+  
+      fetchAgents();
+    }, []);
+
   const handleWorkspaceClick = () => {
-    if (isAuthenticated) {
+    // Redirect to workspace if authenticated and user has at least one agent
+    if (isAuthenticated && userAgents.length > 0) {
       navigate('/workspace');
     } else {
       navigate('/explore');

@@ -110,8 +110,8 @@ const Summary = () => {
               Retour à l'exploration
             </Button>
             
-            <h1 className="text-3xl font-bold text-white mb-2">Résumé de votre commande</h1>
-            <p className="text-white/80">Vérifiez vos agents sélectionnés avant de procéder au paiement</p>
+            <h1 className="text-3xl font-bold text-white mb-2">Résumé de votre souscription</h1>
+            <p className="text-white/80">Vérifiez vos agents sélectionnés de valider</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -127,9 +127,9 @@ const Summary = () => {
                           {agent.description}
                         </CardDescription>
                       </div>
-                      <div className="text-white font-bold text-xl">
+                      {/* <div className="text-white font-bold text-xl">
                         {agent.price}€/mois
-                      </div>
+                      </div> */}
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -150,24 +150,24 @@ const Summary = () => {
             <div className="lg:col-span-1">
               <Card className="bg-white/10 backdrop-blur-sm border-white/20 sticky top-8">
                 <CardHeader>
-                  <CardTitle className="text-white">Résumé de la commande</CardTitle>
+                  <CardTitle className="text-white">Résumé de la souscription</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     {selectedAgents.map((agent) => (
                       <div key={agent.id} className="flex justify-between items-center">
                         <span className="text-white/80">{agent.name}</span>
-                        <span className="text-white">{agent.price}€</span>
+                        {/* <span className="text-white">{agent.price}€</span> */}
                       </div>
                     ))}
                   </div>
                   
-                  <div className="border-t border-white/20 pt-4">
+                  {/* <div className="border-t border-white/20 pt-4">
                     <div className="flex justify-between items-center text-lg font-bold">
                       <span className="text-white">Total mensuel</span>
                       <span className="text-white">{totalPrice}€</span>
                     </div>
-                  </div>
+                  </div> */}
                   
                   {selectedPlan && selectedPlan.feature_list && selectedPlan.feature_list.length > 0 && (
                     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 space-y-2 mb-4">
@@ -187,8 +187,9 @@ const Summary = () => {
                     className="w-full bg-white hover:bg-orange-50 flex items-center gap-2"
                     style={{color: '#D2840C'}}
                   >
-                    <CreditCard className="w-4 h-4" />
-                    {processing ? 'Traitement...' : `Payer ${totalPrice}€/mois`}
+                    {/* <CreditCard className="w-4 h-4" /> */}
+                    {/* {processing ? 'Traitement...' : `Payer ${totalPrice}€/mois`} */}
+                    {processing ? 'Traitement...' : `Valider la souscription`}
                   </Button>
                   
                   <p className="text-xs text-white/60 text-center">

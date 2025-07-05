@@ -215,7 +215,7 @@ const ExploreAgents = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">${agent.price}/mo</div>
+                      {/* <div className="text-2xl font-bold text-gray-900">${agent.price}/mo</div> */}
                       {!isDisabled && (
                         <Button
                           onClick={() => toggleAgent(agent.id)}
@@ -252,21 +252,7 @@ const ExploreAgents = () => {
                       </div>
                     </div>
                     
-                    {/* <div>
-                      <span className="text-sm text-gray-600">Languages supported: </span>
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {agent.languages.map((lang, index) => (
-                          <span key={index} className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                            {lang}
-                          </span>
-                        ))}
-                      </div>
-                    </div> */}
                   </div>
-                  
-                  {/* <div className="mt-4 p-3 bg-orange-50 rounded-lg">
-                    <p className="text-orange-700 text-sm font-medium">✨ {agent.keyFeature}</p>
-                  </div> */}
                 </CardContent>
               </Card>
             );
@@ -279,14 +265,14 @@ const ExploreAgents = () => {
             <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="w-5 h-5 text-orange-500" />
+                  {/* <ShoppingCart className="w-5 h-5 text-orange-500" /> */}
                   <span className="text-gray-900 font-medium">
                     {selectedAgents.length} {t.agentsSelected}
                   </span>
                 </div>
-                <div className="text-orange-600 font-bold text-xl">
+                {/* <div className="text-orange-600 font-bold text-xl">
                   ${totalPrice}/month
-                </div>
+                </div> */}
               </div>
               
               <div className="flex gap-3">

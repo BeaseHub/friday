@@ -47,8 +47,8 @@ async def create_agent(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    # if current_user.type != "admin":
-    #     raise HTTPException(status_code=403, detail="Admin privileges required")
+    if current_user.type != "admin":
+        raise HTTPException(status_code=403, detail="Admin privileges required")
     agent_data = {
         "name": name,
         "price": price,

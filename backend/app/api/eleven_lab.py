@@ -1,3 +1,4 @@
+import json
 from fastapi import FastAPI, Request, HTTPException
 from pydantic import BaseModel
 import hmac
@@ -16,9 +17,11 @@ class WebhookPayload(BaseModel):
     event: str
     data: dict
 
+
 @router.post("/webhook/eleven")
 async def receive_webhook(request: Request):
     print("Received webhook request for elevenlab")
+
     raw = await request.body()
     sig_header = request.headers.get("elevenlabs-signature")
     if not sig_header:
@@ -45,18 +48,24 @@ async def receive_webhook(request: Request):
     if hmac_signature != expected_sig:
         raise HTTPException(status_code=401, detail="Invalid signature")
 
+
+
     # Now process the payload
-    payload = WebhookPayload.parse_raw(raw)
-    data = payload.data
+    payload = raw.decode("utf-8")
+    json_payload = json.loads(payload)
+
+    data = json_payload.get("data", {})
+
+
 
     # ✅ Extract relevant values
-    user_name = data.get("conversation_initiation_client_data", {}) \
-                    .get("dynamic_variables", {}) \
-                    .get("user_name")
+    # user_name = data.get("conversation_initiation_client_data", {}) \
+    #                 .get("dynamic_variables", {}) \
+    #                 .get("user_name")
     
-    user_id = data.get("conversation_initiation_client_data", {}) \
-                    .get("dynamic_variables", {}) \
-                    .get("user_id")
+    # user_id = data.get("conversation_initiation_client_data", {}) \
+    #                 .get("dynamic_variables", {}) \
+    #                 .get("user_id")
     
     agent_id = data.get("agent_id")
 
@@ -73,7 +82,7 @@ async def receive_webhook(request: Request):
     full_transcript = "\n".join([f"{msg['role'].upper()}: {msg['message']}" for msg in transcript_list])
 
     # ✅ Example: Print or store
-    print(f"User: {user_name}, User ID: {user_id}, Conv ID: {conversation_id}")
+    print(f"User: Unkmowm, User ID: Unknown, Conv ID: {conversation_id}")
     print(f"Summary: {transcript_summary}")
     print(f"Transcript:\n{full_transcript}")
 

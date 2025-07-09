@@ -17,6 +17,10 @@ class ElevenLabsService:
 
         # Step 2: Add each message
         for msg in transcript_list:
+
+            if not msg.get("message") or not msg.get("role"):
+                continue  # Skip empty messages
+
             self.message_service.create_message(
                 user_id=user_id,
                 content=msg['message'],

@@ -61,6 +61,8 @@ async def receive_webhook(request: Request,db: Session = Depends(get_db)):
 
     data = json_payload.get("data", {})
 
+    print(f"Received data: {data}")
+
 
 
     # ✅ Extract relevant values
@@ -68,9 +70,9 @@ async def receive_webhook(request: Request,db: Session = Depends(get_db)):
     #                 .get("dynamic_variables", {}) \
     #                 .get("user_name")
     
-    # user_id = data.get("conversation_initiation_client_data", {}) \
-    #                 .get("dynamic_variables", {}) \
-    #                 .get("user_id")
+    user_id = data.get("conversation_initiation_client_data", {}) \
+                    .get("dynamic_variables", {}) \
+                    .get("user_id")
     
     agent_id = data.get("agent_id")
 
@@ -87,7 +89,7 @@ async def receive_webhook(request: Request,db: Session = Depends(get_db)):
     full_transcript = "\n".join([f"{msg['role'].upper()}: {msg['message']}" for msg in transcript_list])
 
     # ✅ Example: Print or store
-    print(f"User: Unkmowm, User ID: Unknown, Conv ID: {conversation_id}")
+    print(f"User ID: {user_id}, Conv ID: {conversation_id}")
     print(f"Summary: {transcript_summary}")
     print(f"Transcript:\n{full_transcript}")
 
@@ -98,6 +100,6 @@ async def receive_webhook(request: Request,db: Session = Depends(get_db)):
     elevenlabs_service = ElevenLabsService(db=db, message_service=message_service)  # Replace with actual DB session and service
 
     return elevenlabs_service.import_transcript_as_conversation(
-        user_id=None,  # Replace with actual user ID if available
+        user_id=user_id,  # Replace with actual user ID if available
         transcript_list=transcript_list
     )

@@ -228,7 +228,10 @@ const Workspace = () => {
         <elevenlabs-convai agent-id="3AV2tYqySsT8uWSEV2ay"></elevenlabs-convai>
       </div> */}
       <div >
-        <elevenlabs-convai agent-id={activeAgent?.eleven_labs_id}></elevenlabs-convai>
+        <elevenlabs-convai 
+          agent-id={activeAgent?.eleven_labs_id}
+          dynamic-variables={JSON.stringify({ user_id: getAuthUserAndToken().userId })}>
+        </elevenlabs-convai>
       </div>
 
       {/* Workspace Header */}

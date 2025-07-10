@@ -52,8 +52,8 @@ const Workspace = () => {
   >([]);
 
 
-  // Add this at the top of your component
-  const wsRef = useRef<WebSocket | null>(null);
+  const globalWsRef = useRef<WebSocket | null>(null);      // For user_{userId}_conversations
+  const conversationWsRef = useRef<WebSocket | null>(null); // For conversation_{id}
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -105,6 +105,61 @@ const Workspace = () => {
 
     fetchAgents();
     fetchConversations();
+
+    // 👇 Add WebSocket connection
+    const { userId } = getAuthUserAndToken();
+    // Connect to the WebSocket room for the selected conversation
+    const ws = new WebSocket(`${API_URL.replace(/^http/, 'ws')}/ws/user_${userId}_conversations`);
+    globalWsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("WebSocket connected to room:", `user_${userId}_conversations`);
+    };
+
+    ws.onmessage = async (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        console.log('New message received:', parsed);
+        if (parsed.event === "new_conversation") {
+          fetchConversations(); // reload conversation list
+
+          // Refresh conversation list SO WE CAN GET the updated messages from the websocket using the dedicated conversation room
+          const { userId, token } = getAuthUserAndToken();
+          const updatedConversations = await getConversationsByUser(userId, token);
+          // const updatedConversations = conversations;
+
+          // try selecting the latest conversation created
+          if (updatedConversations.length > 0) {
+            const latestConversation = updatedConversations[0]; // You may sort/filter based on created_at
+            console.log('Selecting latest conversation:', latestConversation);
+            dispatch(setSelectedConversation(latestConversation));
+          }
+
+          setMessage('');
+          setFile(null);
+
+        } else {
+          console.log('Unhandled WebSocket message:');
+        }
+      } catch {
+        // If not JSON, just log
+        console.log('Raw message:', event.data);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket disconnected from room:",`user_${userId}_conversations`);
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    // Cleanup on unmount or conversation change
+    return () => {
+      ws.close();
+    };
+
   }, []);
   
   useEffect(() => {
@@ -118,13 +173,13 @@ const Workspace = () => {
       })));
 
     // Close previous WebSocket if any
-    if (wsRef.current) {
-      wsRef.current.close();
+    if (conversationWsRef.current) {
+      conversationWsRef.current.close();
     }
 
     // Connect to the WebSocket room for the selected conversation
     const ws = new WebSocket(`${API_URL.replace(/^http/, 'ws')}/ws/conversation_${selectedConversation.id}`);
-    wsRef.current = ws;
+    conversationWsRef.current = ws;
 
     ws.onopen = () => {
       console.log("WebSocket connected to room:", `conversation_${selectedConversation.id}`);

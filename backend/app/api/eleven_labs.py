@@ -8,8 +8,8 @@ import hashlib
 import time
 import os
 from fastapi import APIRouter
+from app.websocket_manager import ws_manager    # Import the WebSocket manager
 from app.services.eleven_labs import ElevenLabsService
-from app.services.message_service import MessageService
 from app.db.database import get_db
 
 router = APIRouter()
@@ -61,7 +61,7 @@ async def receive_webhook(request: Request,db: Session = Depends(get_db)):
 
     data = json_payload.get("data", {})
 
-    print(f"Received data: {data}")
+    # print(f"Received data: {data}")
 
 
 
@@ -96,10 +96,26 @@ async def receive_webhook(request: Request,db: Session = Depends(get_db)):
     if not db:
         raise HTTPException(status_code=500, detail="Database connection error")
     
-    message_service = MessageService(db)
-    elevenlabs_service = ElevenLabsService(db=db, message_service=message_service)  # Replace with actual DB session and service
+    elevenlabs_service = ElevenLabsService(db=db)  # Replace with actual DB session and service
 
-    return elevenlabs_service.import_transcript_as_conversation(
+    conversation_created= elevenlabs_service.import_transcript_as_conversation(
         user_id=user_id,  # Replace with actual user ID if available
         transcript_list=transcript_list
     )
+
+    room_name = f"user_{user_id}_conversations"
+    print("[WS] Emitting user message")
+    # print(conversation_created)
+
+    # Step 3: Notify via WebSocket
+    # await ws_manager.broadcast(
+    #     room=room_name,
+    #     message=json.dumps(conversation_created)
+    # )
+    
+    await ws_manager.broadcast(
+        room=room_name,
+        message=json.dumps({"event": "new_conversation"})
+    )
+
+# Add the router to the main FastAPI app

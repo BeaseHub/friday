@@ -142,7 +142,7 @@ const ExploreAgents = () => {
     }
     
     toast({
-      title: "Espace activé!",
+      title: "Bienvenue dans votre espace!",
       description: "Vos agents IA ont été activés. Bienvenue dans votre workspace!",
     });
     
@@ -188,9 +188,9 @@ const ExploreAgents = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
+      <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #eca581, #ffc868)' }}>
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 shadow-sm">
+        <header className="bg-white/70 backdrop-blur-sm border-b border-[#eca581]/30 shadow-sm">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -202,7 +202,7 @@ const ExploreAgents = () => {
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   {t.backButton}
                 </Button>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
                   <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-amber-500 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-sm">F</span>
                   </div>
@@ -213,7 +213,7 @@ const ExploreAgents = () => {
           </div>
         </header>
         
-        <main className="container mx-auto px-6 py-8">
+        <main className="container mx-auto px-6 py-8 ">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               {t.manageSubscription}
@@ -233,7 +233,7 @@ const ExploreAgents = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 pb-32">
             {filteredAgents.map((agent) => {
               const isSelected = selectedAgents.some(a=> a.id === agent.id);
               const isActive = isAgentActive(agent.id);

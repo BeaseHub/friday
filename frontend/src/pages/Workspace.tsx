@@ -277,7 +277,7 @@ const Workspace = () => {
   };
 
   return (
-    <div className={`h-screen ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen overflow-y-auto ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
       {/* Eleven lab widget */}
       {/* <div className="flex justify-center p-4 bg-white shadow-sm">
         <elevenlabs-convai agent-id="3AV2tYqySsT8uWSEV2ay"></elevenlabs-convai>
@@ -293,7 +293,7 @@ const Workspace = () => {
       <div className={`flex items-center justify-between p-6 border-b ${
         isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
       }`}>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate('/')}>
           <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
             isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-orange-100 border border-orange-200'
           }`}>
@@ -312,14 +312,6 @@ const Workspace = () => {
             />
             <Moon className={`w-4 h-4 ${isDarkMode ? 'text-blue-400' : 'text-gray-400'}`} />
           </div>
-          <Button 
-            onClick={() => navigate('/')}
-            variant="ghost"
-            className={`${isDarkMode ? 'text-gray-300 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
-          </Button>
         </div>
       </div>
       
@@ -352,7 +344,7 @@ const Workspace = () => {
           {sidebarOpen && (
             <>
               {/* Sidebar Header */}
-              <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+              {/* <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                     isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-orange-100 border border-orange-200'
@@ -364,7 +356,7 @@ const Workspace = () => {
                     
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* AI Assistants */}
               <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
@@ -466,11 +458,11 @@ const Workspace = () => {
                 <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>AI Workspace</h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}></p>
               </div>
-              <Button variant="ghost" size="icon" className={`${
+              {/* <Button variant="ghost" size="icon" className={`${
                 isDarkMode ? 'text-gray-400 hover:text-white hover:bg-gray-800' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}>
                 <Settings className="w-5 h-5" />
-              </Button>
+              </Button> */}
             </div>
           </div>
 
@@ -629,7 +621,7 @@ const Workspace = () => {
           <div className={`border-t p-6 ${
             isDarkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'
           }`}>
-            <div className="flex items-end gap-3 max-w-4xl mx-auto">
+            <div className="flex items-end gap-3 flex-wrap sm:flex-nowrap max-w-4xl mx-auto">
               <Button
                 variant="ghost"
                 size="icon"
@@ -727,7 +719,7 @@ const Workspace = () => {
                       <span className="truncate px-1">{file.name.split('.').pop()?.toUpperCase() || 'FILE'}</span>
                     </a>
                   )}
-                  <Button
+                  { !sending && (<Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setFile(null)}
@@ -736,7 +728,7 @@ const Workspace = () => {
                     style={{ width: 20, height: 20, minWidth: 20, minHeight: 20, padding: 0, fontSize: 14 }}
                   >
                     ×
-                  </Button>
+                  </Button>)}
                 </div>
                 <span className="mt-1 text-[11px] text-gray-600 max-w-[80px] truncate text-center">{file.name}</span>
               </div>

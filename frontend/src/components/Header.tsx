@@ -108,7 +108,7 @@ const Header = () => {
   return (
     <>
       <header className="flex items-center justify-between p-6 bg-transparent backdrop-blur-sm">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2" onClick={() => navigate('/')}>
           <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center border border-white/30">
             <span className="text-white font-bold text-sm">F</span>
           </div>

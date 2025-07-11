@@ -70,7 +70,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-700 via-orange-800 to-red-900" style={{background: 'linear-gradient(to bottom right, #D2840C, #B8740A, #A0630A)'}}>
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to right, #eca581, #ffc868)' }}
+>
       <Header />
       
       <main className="container mx-auto px-6 py-12">

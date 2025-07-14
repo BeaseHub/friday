@@ -8,6 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAppDispatch } from '@/hooks/useRedux';
 import { login } from '@/store/slices/authSlice';
 import { signup, updateProfile, changePassword, login as loginApi } from '@/api/authApi';
+import { useTranslation } from 'react-i18next';
+
 
 interface AuthModalProps {
   open: boolean;
@@ -40,6 +42,9 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
     profilePicturePath:'',
     profilePicture: null as File | null,
   });
+
+  const { t } = useTranslation();
+
 
   useEffect(() => {
     if (mode === 'update' && user && !formData.firstName) {
@@ -82,30 +87,30 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
   const validateForm = () => {
     if (mode === 'signup') {
       if (!formData.firstName.trim()) {
-        toast({ title: "Error", description: "First name is required", variant: "destructive" });
+        toast({ title: t("errorTitle"), description: t("formFirstNameRequired"), variant: "destructive" });
         return false;
       }
       if (!formData.lastName.trim()) {
-        toast({ title: "Error", description: "Last name is required", variant: "destructive" });
+        toast({ title: t("errorTitle"), description: t("formLastNameRequired"), variant: "destructive" });
         return false;
       }
       if (!formData.phoneNumber.trim()) {
-        toast({ title: "Error", description: "Phone number is required", variant: "destructive" });
+        toast({ title: t("errorTitle"), description: t("formPhoneNumberRequired"), variant: "destructive" });
         return false;
       }
       if (formData.password !== formData.confirmPassword) {
-        toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
+        toast({ title: t("errorTitle"), description: t("formPasswordMismatch"), variant: "destructive" });
         return false;
       }
     }
     
     if (!formData.email.trim()) {
-      toast({ title: "Error", description: "Email is required", variant: "destructive" });
+      toast({ title: t("errorTitle"), description: t("formEmailRequired"), variant: "destructive" });
       return false;
     }
     
     if (mode !== "update" && !formData.password.trim()) {
-      toast({ title: "Error", description: "Password is required", variant: "destructive" });
+      toast({ title: t("errorTitle"), description: t("formPasswordRequired"), variant: "destructive" });
       return false;
     }
     
@@ -144,8 +149,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
           );
                 // Show success toast
           toast({
-            title: "Welcome back!",
-            description: "You have successfully logged in.",
+            title: t("loginSuccessTitle"),
+            description: t("loginSuccessDesc"),
           });
           onClose();
         }
@@ -181,15 +186,15 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
           );
           // Show success toast
           toast({
-            title: "Profile updated!",
-            description: "Your profile information has been updated.",
+            title: t("profileUpdated"),
+            description: t("profileUpdatedDesc"),
           });
           // Optionally update Redux/localStorage with new user info
           onClose();
         } else {
           toast({
-            title: "Update failed",
-            description: "Please check your inputs and try again.",
+            title: t("updateFailed"),
+            description: t("updateFailedDesc"),
             variant: "destructive",
           });
         }
@@ -208,14 +213,14 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
 
         if (result?.status === 200 || result?.statusText=== 'OK') {
           toast({
-            title: "Password changed!",
-            description: "Your password has been updated.",
+            title: t("passwordChanged"),
+            description: t("passwordChangedDesc"),
           });
           onClose();
         } else {
           toast({
-            title: "Password change failed",
-            description: "Please check your inputs and try again.",
+            title: t("passwordChangeFailed"),
+            description: t("updateFailedDesc"),
             variant: "destructive",
           });
         }
@@ -235,14 +240,14 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
 
       if (result?.statusText === 'OK') {
         toast({
-          title: "Account created!",
-          description: "Welcome to Friday AI Platform.",
+          title: t("accountCreated"),
+          description: t("accountCreatedDesc"),
         });
         onToggleMode(); // Switch to login mode after signup
       } else {
         toast({
-          title: "Signup failed",
-          description: "Please check your inputs and try again.",
+          title: t("signupFailed"),
+          description: t("signupFailedDesc"),
           variant: "destructive", // optional styling
         });
       }
@@ -260,8 +265,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Something went wrong. Please try again.",
+        title: t("errorTitle"),
+        description: error.message || t("errorGeneric"),
         variant: "destructive",
       });
     } finally {
@@ -285,12 +290,12 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
         
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-white mb-2">
-            {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : mode === 'update' ? 'Update Profile' : 'Change Password'}
+            {mode === 'login' ? t("welcomeBack") : mode === 'signup' ? t("createAccount") : mode === 'update' ? t("updateProfile") : t("changePasswordTitle")}
           </h2>
           <p className="text-friday-orange">
             {mode === 'login' 
-              ? 'Sign in to access your AI agents' 
-              : 'Join Friday and transform your business'
+              ? t("signInMessage")
+              : t("joinFriday")
             }
           </p>
         </div>
@@ -300,7 +305,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="firstName" className="text-white">First Name *</Label>
+                  <Label htmlFor="firstName" className="text-white">{t("firstName")}</Label>
                   <Input
                     id="firstName"
                     type="text"
@@ -311,7 +316,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="lastName" className="text-white">Last Name *</Label>
+                  <Label htmlFor="lastName" className="text-white">{t("lastName")}</Label>
                   <Input
                     id="lastName"
                     type="text"
@@ -324,7 +329,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
               </div>
               
               <div>
-                <Label htmlFor="phoneNumber" className="text-white">Phone Number *</Label>
+                <Label htmlFor="phoneNumber" className="text-white">{t("phoneNumber")}</Label>
                 <Input
                   id="phoneNumber"
                   type="tel"
@@ -336,7 +341,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
               </div>
               
               <div>
-                <Label htmlFor="profilePicturePath" className="text-white">Profile Picture</Label>
+                <Label htmlFor="profilePicturePath" className="text-white">{t("profilePicture")}</Label>
                 <div className="mt-1 flex items-center gap-3">
                   {formData.profilePicturePath && (
                     <img 
@@ -358,7 +363,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
           )}
           
           <div>
-            <Label htmlFor="email" className="text-white">Email *</Label>
+            <Label htmlFor="email" className="text-white">{t("email")}</Label>
             <Input
               id="email"
               type="email"
@@ -372,7 +377,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
           {mode!=="update" && 
             (<div>
               <Label htmlFor="password" className="text-white">
-                {mode === "changePassword" ? "Old Password *" : "Password *"}
+                {mode === "changePassword" ? t("oldPassword") : t("password")}
               </Label>
               <Input
                 id="password"
@@ -387,7 +392,7 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
           {(mode === 'signup'|| mode ==="changePassword") && (
             <div>
               <Label htmlFor="confirmPassword" className="text-white">
-                {mode === "changePassword" ? "New Password *" : " Confirm Password *"}
+                {mode === "changePassword" ? t("newPassword") : t("confirmPassword")}
               </Label>
               <Input
                 id="confirmPassword"
@@ -406,16 +411,16 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
             className="w-full bg-friday-orange hover:bg-friday-orange-light text-white"
           >
             {loading
-              ? 'Please wait...'
+              ? t("pleaseWait")
               : mode === 'login'
-                ? 'Sign In'
+                ? t("login")
                 : mode === 'signup'
-                  ? 'Create Account'
+                  ? t("createAccount")
                   : mode === 'update'
-                    ? 'Update Profile'
+                    ? t("updateProfile")
                     : mode === 'changePassword'
-                      ? 'Change Password'
-                      : 'Submit'
+                      ? t("changePassword")
+                      : t('submit')
             }
           </Button>
         </form>
@@ -426,8 +431,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
             className="text-friday-orange hover:text-friday-orange-light text-sm"
           >
             {mode === 'login' 
-              ? "Don't have an account? Sign up" 
-              : "Already have an account? Sign in"
+              ? t("dontHaveAccount")
+              : t("alreadyHaveAccount")
             }
           </button>
         </div>

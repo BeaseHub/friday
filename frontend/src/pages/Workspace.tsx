@@ -66,9 +66,10 @@ const Workspace = () => {
       const token = parsed?.user?.token ?? null;
       const initials = parsed?.user?.initials ?? null;
       const fullName = parsed?.user?.firstName +" " + parsed?.user?.lastName;
-      return { userId, token, fullName, initials };
+      const userEmail = parsed?.user?.email ?? null;
+      return { userId, token, fullName, initials, userEmail };
     } catch {
-      return { userId: null, token: null,fullName: null, initials: null};
+      return { userId: null, token: null,fullName: null, initials: null, userEmail:null};
     }
   };
 
@@ -285,7 +286,7 @@ const Workspace = () => {
       <div >
         <elevenlabs-convai 
           agent-id={activeAgent?.eleven_labs_id}
-          dynamic-variables={JSON.stringify({ user_id: getAuthUserAndToken().userId })}>
+          dynamic-variables={JSON.stringify({ user_id: getAuthUserAndToken().userId, user_email: getAuthUserAndToken().userEmail })}>
         </elevenlabs-convai>
       </div>
 

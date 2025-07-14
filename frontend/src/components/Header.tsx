@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import AuthModal from './AuthModal';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Header = () => {
   const { user, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -23,6 +24,7 @@ const Header = () => {
   const navigate = useNavigate();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'update' | 'changePassword'>('login');
+  const {t, i18n }=useTranslation();
 
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -48,7 +50,9 @@ const Header = () => {
 
   const handleLanguageChange = () => {
     const newLanguage = currentLanguage === 'en' ? 'fr' : 'en';
-    dispatch(setLanguage(newLanguage));
+    i18n.changeLanguage(currentLanguage === 'en' ? 'fr' : 'en').then(() => {
+      dispatch(setLanguage(newLanguage));
+    });
   };
 
   // ...inside Header component, after hooks:
@@ -68,24 +72,6 @@ const Header = () => {
     }
   }, [user, dispatch]);
 
-  const translations = {
-    en: {
-      subscriptions: 'Subscriptions',
-      language: 'Language',
-      logout: 'Logout',
-      login: 'Login',
-      signUp: 'Sign Up'
-    },
-    fr: {
-      subscriptions: 'Abonnements',
-      language: 'Langue',
-      logout: 'Déconnexion',
-      login: 'Connexion',
-      signUp: 'S\'inscrire'
-    }
-  };
-
-  const t = translations[currentLanguage];
 
   const [notifications, setNotifications] = useState([
   {
@@ -128,11 +114,11 @@ const Header = () => {
 
             <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto bg-white border border-gray-200 shadow-lg">
               <div className="text-sm font-semibold px-4 py-2 border-b border-gray-100 text-gray-700">
-                Notifications
+                {t("notifications")}
               </div>
 
               {notifications.length === 0 ? (
-                <div className="text-gray-500 px-4 py-4 text-sm">No notifications</div>
+                <div className="text-gray-500 px-4 py-4 text-sm">{t("noNotifications")}</div>
               ) : (
                 notifications.slice(0, 5).map((notif) => (
                   <DropdownMenuItem
@@ -188,33 +174,33 @@ const Header = () => {
                     onClick={() => handleAuthClick('update')}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
-                    {"Update information"}
+                    {t("updateInformation")}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => handleAuthClick('changePassword')}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
-                    {"Change password"}
+                    {t("changePassword")}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={handleSubscriptionsClick}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
-                    {t.subscriptions}
+                    {t("subscriptions")}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={handleLanguageChange}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
                     <Globe className="w-4 h-4 mr-2" />
-                    {t.language}: {currentLanguage.toUpperCase()}
+                    {t("language")}: {currentLanguage.toUpperCase()}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-gray-200" />
                   <DropdownMenuItem 
                     onClick={handleLogout}
                     className="text-orange-700 hover:bg-orange-50 hover:text-orange-800"
                   >
-                    {t.logout}
+                    {t("logout")}
                   </DropdownMenuItem>
                 </>
               ) : (
@@ -223,13 +209,13 @@ const Header = () => {
                     onClick={() => handleAuthClick('login')}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
-                    {t.login}
+                    {t("login")}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => handleAuthClick('signup')}
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
-                    {t.signUp}
+                    {t("signUp")}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-gray-200" />
                   <DropdownMenuItem 
@@ -237,7 +223,7 @@ const Header = () => {
                     className="text-gray-700 hover:bg-orange-50 hover:text-orange-800"
                   >
                     <Globe className="w-4 h-4 mr-2" />
-                    {t.language}: {currentLanguage.toUpperCase()}
+                    {t("language")}: {currentLanguage.toUpperCase()}
                   </DropdownMenuItem>
                 </>
               )}

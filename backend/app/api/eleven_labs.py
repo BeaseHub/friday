@@ -73,6 +73,9 @@ async def receive_webhook(request: Request,db: Session = Depends(get_db)):
     user_id = data.get("conversation_initiation_client_data", {}) \
                     .get("dynamic_variables", {}) \
                     .get("user_id")
+    user_email = data.get("conversation_initiation_client_data", {}) \
+                    .get("dynamic_variables", {}) \
+                    .get("user_email")
     
     agent_id = data.get("agent_id")
 
@@ -89,7 +92,7 @@ async def receive_webhook(request: Request,db: Session = Depends(get_db)):
     full_transcript = "\n".join([f"{msg['role'].upper()}: {msg['message']}" for msg in transcript_list])
 
     # ✅ Example: Print or store
-    print(f"User ID: {user_id}, Conv ID: {conversation_id}")
+    print(f"User ID: {user_id}, user email: {user_email} Conv ID: {conversation_id}")
     print(f"Summary: {transcript_summary}")
     print(f"Transcript:\n{full_transcript}")
 

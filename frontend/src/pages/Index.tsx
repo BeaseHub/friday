@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import Header from '@/components/Header';
 import { useAppSelector,useAppDispatch } from '@/hooks/useRedux';
 import {getActiveSubscriptionsByUser} from '@/api/subscriptionApi';
+import { useTranslation } from 'react-i18next';
 
 const animatedTexts = [
   "Multipliez vos revenus par 10",
@@ -21,6 +22,7 @@ const Index = () => {
   const [charIndex, setCharIndex] = useState(0);
   const dispatch = useAppDispatch();
   const [userAgents, setUserAgents] = useState([]);
+  const { t} = useTranslation();
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -70,8 +72,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen" style={{ background: 'linear-gradient(to right, #eca581, #ffc868)' }}
->
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to right, black, #686464)' }}>
       <Header />
       
       <main className="container mx-auto px-6 py-12">

@@ -29,6 +29,10 @@
   "pleaseWait": "Veuillez patienter...",
   "alreadyHaveAccount": "Vous avez déjà un compte ? Connectez-vous",
   "dontHaveAccount": "Vous n'avez pas de compte ? Créez-en un",
+  "emailTemplate": "Modèle d'e-mail",
+  "defaultTemplate": "Entrez le nom de votre modèle d'e-mail préféré",
+  "bio": "Bio",
+  "bioPlaceholder": "Écrivez une courte description à propos de vous...",
   
   "accountCreated": "Compte créé !",
   "accountCreatedDesc": "Bienvenue sur la plateforme Friday AI.",

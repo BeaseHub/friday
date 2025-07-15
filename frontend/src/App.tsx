@@ -11,6 +11,7 @@ import ExploreAgents from "./pages/ExploreAgents";
 import Workspace from "./pages/Workspace";
 import Summary from "./pages/Summary";
 import NotFound from "./pages/NotFound";
+import LanguageInitializer from "./components/LanguageInitializer";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <LanguageInitializer /> {/* ✅ Now Redux is available here */}
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/explore" element={<ExploreAgents />} />

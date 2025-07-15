@@ -7,6 +7,8 @@ class UserBase(BaseModel):
     type: Optional[str] = "user"  # or admin, default is "user"
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    email_template: Optional[str] = None
+    bio: Optional[str] = None
     phone_number: Optional[str] = None
     profile_picture_path: Optional[str] = None
     is_active: Optional[bool] = True
@@ -19,6 +21,8 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = None
     phone_number: Optional[str] = None
     profile_picture_path: Optional[str] = None
+    email_template: Optional[str] = None
+    bio: Optional[str] = None
     is_active: Optional[bool] = None  # Allow user to activate/deactivate
 
 class ChangePassword(BaseModel):

@@ -61,6 +61,11 @@ export const login = async (email: string, password: string) => {
 export const updateProfile = async (formData: FormData, token: string) => {
   try {
     console.log(token);
+    console.log(formData);
+    console.log("form data api call");
+        formData.forEach((value, key) => {
+          console.log(`${key}: ${value}`);
+        });
     const res = await axios.patch(`${API_URL}/update-profile`, formData, {
       headers: {
         'Authorization': `Bearer ${token}`,

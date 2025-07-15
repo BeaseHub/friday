@@ -14,6 +14,8 @@ class User(Base):
     first_name = Column(String(100))
     last_name = Column(String(100))
     phone_number = Column(String(20))
+    email_template = Column(Text, nullable=True)
+    bio = Column(Text, nullable=True) 
     profile_picture_path = Column(String(255))
     email_verified_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True)

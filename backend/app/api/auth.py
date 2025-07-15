@@ -65,6 +65,8 @@ async def signup(
     first_name: str = Form(None),
     last_name: str = Form(None),
     phone_number: str = Form(None),
+    email_template: str = Form(None),
+    bio: str = Form(None),
     profile_picture: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
@@ -91,7 +93,9 @@ async def signup(
         last_name=last_name,
         phone_number=phone_number,
         profile_picture_path=profile_picture_path,
-        type="user"
+        type="user",
+        email_template=email_template,
+        bio=bio,
     )
 
 @router.post("/admin/create-user", response_model=User)
@@ -101,6 +105,8 @@ async def create_user_admin(
     first_name: str = Form(None),
     last_name: str = Form(None),
     phone_number: str = Form(None),
+    email_template: str = Form(None),
+    bio: str = Form(None),
     profile_picture: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)  # Only admins can access
@@ -130,7 +136,9 @@ async def create_user_admin(
         last_name=last_name,
         phone_number=phone_number,
         profile_picture_path=profile_picture_path,
-        type="admin"
+        type="admin",
+        email_template=email_template,
+        bio=bio,
     )
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -170,6 +178,8 @@ async def update_profile(
     first_name: str = Form(None),
     last_name: str = Form(None),
     phone_number: str = Form(None),
+    email_template: str = Form(None),
+    bio: str = Form(None),
     profile_picture: UploadFile = File(None),
     is_active: bool = Form(None),
     db: Session = Depends(get_db),
@@ -188,6 +198,10 @@ async def update_profile(
         update_data["phone_number"] = phone_number
     if is_active is not None:
         update_data["is_active"] = is_active
+    if email_template is not None:
+        update_data["email_template"] = email_template
+    if bio is not None:
+        update_data["bio"] = bio
     if profile_picture:
         UPLOAD_DIR = "uploads/profiles"
         os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -199,6 +213,8 @@ async def update_profile(
         update_data["profile_picture_path"] = f"{UPLOAD_DIR}/{filename}"
     
     updated_user= service.update_profile(user, **update_data)
+    print(updated_user.email_template)
+    print(updated_user.bio)
 
     if not updated_user:
         raise HTTPException(status_code=400, detail="Failed to update profile") 

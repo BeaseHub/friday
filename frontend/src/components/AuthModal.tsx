@@ -41,6 +41,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
     confirmPassword: '',
     profilePicturePath:'',
     profilePicture: null as File | null,
+    emailTemplate:'',
+    bio:''
   });
 
   const { t } = useTranslation();
@@ -54,6 +56,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
         lastName: user.lastName || '',
         email: user.email || '',
         phoneNumber: user.phoneNumber || '',
+        emailTemplate:user.emailTemplate || '',
+        bio: user.bio || '',
         profilePicturePath: user.profilePicturePath ? `${API_URL}/${user.profilePicturePath.replace(/^\/+/, '')}` : null,
       }));
     } else if (mode === 'changePassword' && user && !formData.email) {
@@ -141,6 +145,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
               lastName: user.last_name,
               email: user.email,
               phoneNumber: user.phone_number,
+              emailTemplate:user.email_template,
+              bio:user.bio,
               profilePicturePath: user.profile_picture_path ?? '',
               initials: `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase(),
               role: user.type,
@@ -160,6 +166,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
         form.append('first_name', formData.firstName);
         form.append('last_name', formData.lastName);
         form.append('phone_number', formData.phoneNumber);
+        form.append('email_template', formData.emailTemplate);
+        form.append('bio', formData.bio);
         if (formData.profilePicture) {
           form.append('profile_picture', formData.profilePicture);
         }
@@ -177,6 +185,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
               firstName: response.user.first_name,
               lastName: response.user.last_name,
               email: response.user.email,
+              emailTemplate: response.user.email_template,
+              bio: response.user.bio,
               phoneNumber: response.user.phone_number,
               profilePicturePath: response.user.profile_picture_path ?? '',
               initials: `${response.user.first_name?.[0] ?? ''}${response.user.last_name?.[0] ?? ''}`.toUpperCase(),
@@ -232,6 +242,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
         form.append('first_name', formData.firstName);
         form.append('last_name', formData.lastName);
         form.append('phone_number', formData.phoneNumber);
+        form.append('email_template', formData.emailTemplate);
+        form.append('bio', formData.bio);
         if (formData.profilePicture) {
           form.append('profile_picture', formData.profilePicture);
         }
@@ -260,6 +272,8 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
         phoneNumber: '',
         password: '',
         confirmPassword: '',
+        emailTemplate:'',
+        bio:'',
         profilePicturePath: '',
         profilePicture: null,
       });
@@ -373,6 +387,35 @@ const AuthModal = ({ open, onClose, mode, onToggleMode }: AuthModalProps) => {
               required
             />
           </div>
+
+          {(mode === "signup" || mode === "update") && (
+          <>
+            <div>
+              <Label htmlFor="emailTemplate" className="text-white">{t("emailTemplate")}</Label>
+              <textarea
+                id="emailTemplate"
+                value={formData.emailTemplate}
+                onChange={(e) => handleInputChange('emailTemplate', e.target.value)}
+                className="bg-friday-black border-friday-black-lighter text-white mt-1 w-full rounded-md p-2"
+                rows={2}
+                placeholder={t("defaultTemplate")}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="bio" className="text-white">{t("bio")}</Label>
+              <textarea
+                id="bio"
+                value={formData.bio}
+                onChange={(e) => handleInputChange('bio', e.target.value)}
+                className="bg-friday-black border-friday-black-lighter text-white mt-1 w-full rounded-md p-2"
+                rows={5}
+                placeholder={t("bioPlaceholder")}
+              />
+            </div>
+          </>
+        )}
+
           
           {mode!=="update" && 
             (<div>

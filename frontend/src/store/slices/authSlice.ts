@@ -12,6 +12,8 @@ interface User {
   initials: string;
   token: string;
   role: 'user' | 'admin';
+  emailTemplate:string,
+  bio:string
 }
 
 interface AuthState {

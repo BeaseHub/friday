@@ -23,6 +23,7 @@ import { getActiveSubscriptionsByUser } from '@/api/subscriptionApi';
 import AuthModal from '@/components/AuthModal';
 import { useToast } from '@/hooks/use-toast';
 import {createSubscription} from '@/api/subscriptionApi';
+import { useTranslation } from 'react-i18next';
 
 
 
@@ -37,10 +38,13 @@ const ExploreAgents = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { isAuthenticated } = useAppSelector((state) => state.auth);
 
-    const [authModalOpen, setAuthModalOpen] = useState(false);
-    const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-    const [processing, setProcessing] = useState(false);
-    const { toast } = useToast();
+  const { t } = useTranslation();
+
+
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [processing, setProcessing] = useState(false);
+  const { toast } = useToast();
 
   const [loading, setLoading] = useState(true);
 
@@ -157,35 +161,6 @@ const ExploreAgents = () => {
     return agents.some(agent => agent.id === agentId && agent.is_active);
   };
 
-  const translations = {
-    en: {
-      backButton: 'Back',
-      selectAgents: 'Select Your AI Assistants',
-      manageSubscription: 'Manage Your Subscriptions',
-      selectUpTo: 'Choose up to 2 agents for your plan.',
-      viewActive: 'View and manage your active subscriptions below.',
-      searchPlaceholder: 'Search assistants...',
-      active: 'ACTIVE',
-      agentsAvailable: 'agents available',
-      continue: 'Continue',
-      addMore: 'Add More Agents'
-    },
-    fr: {
-      backButton: 'Retour',
-      selectAgents: 'Sélectionnez vos Assistants IA',
-      manageSubscription: 'Gérer vos Abonnements',
-      selectUpTo: 'Choisissez jusqu\'à 2 agents pour votre plan.',
-      viewActive: 'Consultez et gérez vos abonnements actifs ci-dessous.',
-      searchPlaceholder: 'Rechercher des assistants...',
-      active: 'ACTIF',
-      agentsAvailable: 'agents disponibles',
-      continue: 'Continuer',
-      addMore: 'Ajouter plus d\'Agents'
-    }
-  };
-
-  const t = translations[currentLanguage];
-
   return (
     <>
       <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #eca581, #ffc868)' }}>
@@ -200,7 +175,7 @@ const ExploreAgents = () => {
                   className="text-gray-600 hover:text-gray-900"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
-                  {t.backButton}
+                  {t("backButton")}
                 </Button>
                 <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
                   <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-amber-500 rounded-lg flex items-center justify-center">
@@ -216,10 +191,10 @@ const ExploreAgents = () => {
         <main className="container mx-auto px-6 py-8 ">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {t.manageSubscription}
+              {t("manageSubscription")}
             </h1>
             <p className="text-gray-600 mb-6">
-              {t.viewActive}
+              {t("viewActive")}
             </p>
             
             <div className="relative max-w-md">
@@ -264,7 +239,7 @@ const ExploreAgents = () => {
                             <CardTitle className="text-gray-900 text-lg">{agent.name}</CardTitle>
                             {isActive && (
                               <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded">
-                                {t.active}
+                                {t("active")}
                               </span>
                             )}
                           </div>
@@ -298,7 +273,7 @@ const ExploreAgents = () => {
                     
                     <div className="space-y-3">
                       <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Key Features:</h4>
+                        <h4 className="font-medium text-gray-900 mb-2">{t("keyFeatures")}</h4>
                         <div className="flex flex-wrap gap-1">
                           {agent.feature_list.map((feature, index) => (
                             <span key={index} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
@@ -323,7 +298,7 @@ const ExploreAgents = () => {
                   <div className="flex items-center gap-2">
                     {/* <ShoppingCart className="w-5 h-5 text-orange-500" /> */}
                     <span className="text-gray-900 font-medium">
-                      {selectedAgents.length} {t.agentsAvailable}
+                      {selectedAgents.length} {t("agentsAvailable")}
                     </span>
                   </div>
                   {/* <div className="text-orange-600 font-bold text-xl">
@@ -340,7 +315,7 @@ const ExploreAgents = () => {
                     ))}
                     {selectedAgents.length > 2 && (
                       <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm">
-                        +{selectedAgents.length - 2} more
+                        +{selectedAgents.length - 2} {t("more")}
                       </span>
                     )}
                   </div>
@@ -350,7 +325,7 @@ const ExploreAgents = () => {
                     disabled={processing}
                     className="bg-gradient-to-r from-orange-400 to-amber-500 hover:from-orange-500 hover:to-amber-600 text-white px-6 py-2"
                   >
-                    {processing ? 'Traitement...' : `Acceder a l'espace de travail`}
+                    {processing ? t("processing") : t("workspaceAccess")}
                   </Button>
                 </div>
               </div>

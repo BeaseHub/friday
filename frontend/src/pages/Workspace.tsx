@@ -16,6 +16,8 @@ import { io, Socket } from 'socket.io-client';
 import Draggable from 'react-draggable';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatedSendingDots } from '@/components/ui/animated-sending-dots';
+import { useTranslation } from 'react-i18next';
+
 
 declare global {
   namespace JSX {
@@ -41,6 +43,9 @@ const Workspace = () => {
   const { agents} = useAppSelector((state) => state.agent);  
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+
+  const { t } = useTranslation();
+
 
 
 
@@ -362,7 +367,7 @@ const Workspace = () => {
               {/* AI Assistants */}
               <div className={`p-6 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                 <h3 className={`font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Your AI Assistant
+                  {t('yourAiAssistant')}
                 </h3>
 
                 <select
@@ -378,7 +383,7 @@ const Workspace = () => {
                       : 'bg-white text-gray-900 border-gray-300 focus:border-orange-400'
                     }`}
                 >
-                  <option value="" disabled>View your assistant...</option>
+                  <option value="" disabled>{t("viewYourAssistant")}</option>
                   {agents.map((agent) => (
                     <option key={agent.id} value={agent.id}>
                       {agent.name}
@@ -390,7 +395,7 @@ const Workspace = () => {
               {/* Recent Conversations */}
               <div className="flex-1 p-6 overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Recent Conversations</h3>
+                  <h3 className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t("recentConversations")}</h3>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -401,7 +406,7 @@ const Workspace = () => {
                       setFile(null);
                       dispatch(setSelectedConversation(null));
                     }}
-                    title="New Chat"
+                    title={t("newChat")}
                   >
                     <Plus className="w-5 h-5" />
                   </Button>
@@ -426,13 +431,15 @@ const Workspace = () => {
                         onClick={() => dispatch(setSelectedConversation(conv))}
                       >
                         <div className={`font-medium text-sm mb-1 truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          Conversation #{conv.id}
+                          {t("conversationNumber")}{conv.id}
                         </div>
                         <div className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {lastMessage ? (lastMessage.is_systen ? 'System' : 'User') : 'No messages'}
+                          {lastMessage
+                            ? (lastMessage.is_systen ? t("system") : t("user"))
+                            : t("noMessages")}
                         </div>
                         <div className={`text-xs truncate ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                          {lastMessage ? lastMessage.content : 'No messages yet'}
+                          {lastMessage ? lastMessage.content : t("noMessagesYet")}
                         </div>
                         <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-600' : 'text-gray-400'}`}>
                           {lastMessage ? new Date(lastMessage.sent_at).toLocaleString() : new Date(conv.created_at).toLocaleString()}
@@ -456,7 +463,7 @@ const Workspace = () => {
           }`}>
             <div className="flex items-center justify-between">
               <div>
-                <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>AI Workspace</h1>
+                <h1 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t("aiWorkspace")}</h1>
                 <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}></p>
               </div>
               {/* <Button variant="ghost" size="icon" className={`${
@@ -582,9 +589,9 @@ const Workspace = () => {
                   }`} />
                 </div>
                 
-                <h2 className={`text-2xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Welcome to your AI Workspace</h2>
+                <h2 className={`text-2xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t("welcomeAiWorkspace")}</h2>
                 <p className={`mb-8 text-center max-w-md ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {recording ? 'Listening... Speak now!' : `Start a conversation  using voice or text`}
+                  {recording ? t("listening") : t("startConversation")}
                 </p>
 
                 <div className="flex gap-4">
@@ -597,7 +604,7 @@ const Workspace = () => {
                     }`}
                   >
                     <Mic className="w-4 h-4" />
-                    {recording ? 'Stop Recording' : 'Start Voice Chat'}
+                    {recording ? t("stopRecording") : t("startVoiceChat")}
                   </Button>
                   <Button 
                     variant="outline"
@@ -608,7 +615,7 @@ const Workspace = () => {
                     }`}
                   >
                     <Bot className="w-4 h-4" />
-                    Type Message
+                    {t("typeMessage")}
                   </Button>
                 </div>
                 
@@ -638,7 +645,7 @@ const Workspace = () => {
                   onChange={(e) => setMessage(e.target.value)}
                   disabled={sending}
                   onKeyPress={handleKeyPress}
-                  placeholder={`Type your message to your agents...`}
+                  placeholder={t("typeYourMessage")}
                   className={`min-h-[50px] resize-none border pr-12 focus:ring-2 ${
                     isDarkMode 
                       ? 'bg-gray-800 border-gray-600 text-white placeholder:text-gray-400 focus:ring-orange-500 focus:border-orange-500'
@@ -649,7 +656,7 @@ const Workspace = () => {
                 {/* Animated sending indicator */}
                 {sending && (
                   <div className="absolute left-3 bottom-2 flex items-center text-xs select-none">
-                    <span className={isDarkMode ? "text-orange-300" : "text-orange-600"}>Searching</span>
+                    <span className={isDarkMode ? "text-orange-300" : "text-orange-600"}>{t("searching")}</span>
                     <AnimatedSendingDots isDarkMode={isDarkMode} />
                   </div>
                 )}
@@ -736,7 +743,7 @@ const Workspace = () => {
             )}
 
             <div className="text-xs text-gray-500 mt-1 mb-2 text-center">
-              Only one file allowed per message.
+              {t("onlyOneFile")}
             </div>
 
             <input

@@ -7,12 +7,6 @@ import { useAppSelector,useAppDispatch } from '@/hooks/useRedux';
 import {getActiveSubscriptionsByUser} from '@/api/subscriptionApi';
 import { useTranslation } from 'react-i18next';
 
-const animatedTexts = [
-  "Multipliez vos revenus par 10",
-  "Travaillez plus efficacement", 
-  "Automatisez vos processus",
-  "Optimisez votre productivité"
-];
 
 const Index = () => {
   const navigate = useNavigate();
@@ -23,6 +17,13 @@ const Index = () => {
   const dispatch = useAppDispatch();
   const [userAgents, setUserAgents] = useState([]);
   const { t} = useTranslation();
+
+  const animatedTexts = [
+    t("heroTitle1"),
+    t("heroTitle2"),
+    t("heroTitle3"),
+    t("heroTitle4")
+  ];
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -80,7 +81,7 @@ const Index = () => {
         <div className="flex flex-col items-center justify-center text-center mb-24">
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-8">
             <Sparkles className="w-4 h-4 text-white" />
-            <span className="text-white font-medium">IA Révolutionnaire</span>
+            <span className="text-white font-medium">{t("heroTagline")}</span>
           </div>
           
           {/* Animated Text with wrapping */}
@@ -92,7 +93,7 @@ const Index = () => {
           
           {/* Static Text */}
           <p className="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed max-w-2xl">
-            Transformez votre activité avec la première Équipe IA Business du pays
+            {t("heroSubtitle")}
           </p>
           
           {/* Action Buttons */}
@@ -104,7 +105,7 @@ const Index = () => {
               onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f8f8f8'}
               onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
             >
-              Aller à l'espace de travail
+               {t("goToWorkspace")}
               <ArrowRight className="w-5 h-5" />
             </Button>
             
@@ -122,7 +123,7 @@ const Index = () => {
                 e.currentTarget.style.color = 'white';
               }}
             >
-              Explorer les assistants
+              {t("exploreAssistants")}
               <Search className="w-5 h-5" />
             </Button>
           </div>
@@ -132,20 +133,20 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
             <Computer className="w-12 h-12 text-white mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">Agents Spécialisés</h3>
-            <p className="text-white/80">Des IA expertes dans chaque domaine de votre entreprise</p>
+            <h3 className="text-xl font-semibold text-white mb-2">{t("featureAgentsTitle")}</h3>
+            <p className="text-white/80">{t("featureAgentsDesc")}</p>
           </div>
           
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
             <Brain className="w-12 h-12 text-white mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">Intelligence Avancée</h3>
-            <p className="text-white/80">Technologies d'IA de pointe pour maximiser vos résultats</p>
+            <h3 className="text-xl font-semibold text-white mb-2">{t("featureAIpowerTitle")}</h3>
+            <p className="text-white/80">{t("featureAIpowerDesc")}</p>
           </div>
           
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center">
             <MessageSquare className="w-12 h-12 text-white mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">Interface Intuitive</h3>
-            <p className="text-white/80">Communiquez naturellement avec vos agents IA</p>
+            <h3 className="text-xl font-semibold text-white mb-2">{t("featureUIUXTitle")}</h3>
+            <p className="text-white/80">{t("featureUIUXDesc")}</p>
           </div>
         </div>
       </main>

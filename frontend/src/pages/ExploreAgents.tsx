@@ -163,16 +163,17 @@ const ExploreAgents = () => {
 
   return (
     <>
-      <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #eca581, #ffc868)' }}>
+      <div className="min-h-screen" style={{ background: '#F9F5F0' }}>
         {/* Header */}
-        <header className="bg-white/70 backdrop-blur-sm border-b border-[#eca581]/30 shadow-sm">
+        <header className="backdrop-blur-sm border-b shadow-sm"
+          style={{ background: 'linear-gradient(to right, black, #686464)', borderColor: '#eca581' }}>
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <Button
                   onClick={() => navigate('/')}
                   variant="ghost"
-                  className="text-gray-600 hover:text-gray-900"
+                  className="text-white"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   {t("backButton")}
@@ -292,12 +293,16 @@ const ExploreAgents = () => {
 
           {/* Cart Summary */}
           {selectedAgents.length > 0  && (
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-6 shadow-lg">
+            <div  className="fixed bottom-0 left-0 right-0 p-6 shadow-lg"
+              style={{ 
+                background: 'linear-gradient(to right, black, #686464)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)' // subtle light border for contrast
+              }}>
               <div className="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     {/* <ShoppingCart className="w-5 h-5 text-orange-500" /> */}
-                    <span className="text-gray-900 font-medium">
+                    <span className="text-white font-medium">
                       {selectedAgents.length} {t("agentsAvailable")}
                     </span>
                   </div>
@@ -309,12 +314,19 @@ const ExploreAgents = () => {
                 <div className="flex gap-3">
                   <div className="hidden sm:flex flex-wrap gap-2 max-w-md">
                     {selectedAgents.slice(0, 2).map((agent) => (
-                      <span key={agent.id} className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm">
+                      <span 
+                        key={agent.id} 
+                        className="text-orange-700 px-3 py-1 rounded-full text-sm"
+                        style={{ backgroundColor: '#F9F5F0' }}
+                      >
                         {agent.name}
                       </span>
                     ))}
                     {selectedAgents.length > 2 && (
-                      <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full text-sm">
+                      <span 
+                        className="text-orange-700 px-3 py-1 rounded-full text-sm"
+                        style={{ backgroundColor: '#F9F5F0' }}
+                      >
                         +{selectedAgents.length - 2} {t("more")}
                       </span>
                     )}

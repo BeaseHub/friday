@@ -231,8 +231,20 @@ const Workspace = () => {
     return null;
   }
 
-  const selectActiveAgent = (agentName: string) => {
+  const handleAgentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = parseInt(e.target.value)
+    const agent = agents.find((a) => a.id === selectedId)
+    console.log(agent.name);
+    setActiveAgent(agent || null);
 
+    openNewConversation();
+  }
+
+  const openNewConversation=()=>{
+    setMessage('');
+    setMessages([]);
+    setFile(null);
+    dispatch(setSelectedConversation(null));
   }
 
   const handleSend = async () => {
@@ -371,10 +383,7 @@ const Workspace = () => {
 
                 <select
                   value={activeAgent?.id || ""}
-                  onChange={(e) => {
-                    const agent = agents.find((a) => a.id === parseInt(e.target.value));
-                    setActiveAgent(agent || null);
-                  }}
+                 onChange={handleAgentChange}
                   disabled={agents.length === 0}
                   className={`w-full px-3 py-2 rounded-md border text-sm transition-colors outline-none
                     ${isDarkMode
@@ -399,12 +408,7 @@ const Workspace = () => {
                     variant="ghost"
                     size="icon"
                     className={`w-4 h-4 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}
-                    onClick={() => {
-                      setMessage('');
-                      setMessages([]);
-                      setFile(null);
-                      dispatch(setSelectedConversation(null));
-                    }}
+                    onClick={()=>openNewConversation()}
                     title={t("newChat")}
                   >
                     <Plus className="w-5 h-5" />

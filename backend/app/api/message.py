@@ -139,7 +139,7 @@ async def generate_system_response(user_message: str, conversation_id: int, agen
     print(agent_link)
 
     # Call your n8n webhook or API to get the system response
-    async with httpx.AsyncClient(timeout=20.0) as client:
+    async with httpx.AsyncClient(timeout=60.0) as client:
         n8n_response = await client.post(
             agent_link,
             json={"message": user_message}

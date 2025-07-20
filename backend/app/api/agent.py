@@ -44,6 +44,7 @@ async def create_agent(
     is_active: Optional[bool] = Form(True),
     image: UploadFile = File(None),
     eleven_labs_id: Optional[str] = Form(None),
+    link: Optional[str]=Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -55,6 +56,7 @@ async def create_agent(
         "description": description,
         "is_active": is_active,
         "eleven_labs_id": eleven_labs_id,
+        "link":link
     }
     # Handle feature_list if provided as JSON string
     if feature_list:
@@ -80,6 +82,7 @@ async def create_agent(
 async def update_agent(
     agent_id: int,
     eleven_labs_id: Optional[str] = Form(None),
+    link: Optional[str]=Form(None),
     name: Optional[str] = Form(None),
     price: Optional[float] = Form(None),
     description: Optional[str] = Form(None),
@@ -108,6 +111,8 @@ async def update_agent(
         agent_update["feature_list"] = json.loads(feature_list)
     if eleven_labs_id is not None:
         agent_update["eleven_labs_id"] = eleven_labs_id
+    if link is not None:
+        agent_update["link"] = link
     if image:
         UPLOAD_DIR = "uploads/plans"
         os.makedirs(UPLOAD_DIR, exist_ok=True)

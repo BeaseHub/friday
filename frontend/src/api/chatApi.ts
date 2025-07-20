@@ -32,11 +32,13 @@ export const createMessage = async (
   content: string,
   conversation_id: number,
   token: string,
-  file?: File
+  link: string,
+  file?: File,
 ) => {
   try {
     const formData = new FormData();
     formData.append('content', content);
+    formData.append('link',link);
     if (conversation_id !== null && conversation_id !== undefined) {
         formData.append('conversation_id', conversation_id.toString());
     }

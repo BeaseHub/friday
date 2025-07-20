@@ -100,7 +100,6 @@ const Workspace = () => {
             const activeSubscriptions  = await getActiveSubscriptionsByUser();
             const activeSubscription = activeSubscriptions ?.[0] || null;
             dispatch(setAgents(activeSubscription.agents || []));
-  
           } catch (error) {
             // Optionally handle error (toast, etc.)
             dispatch(setAgents([]));
@@ -244,7 +243,7 @@ const Workspace = () => {
       const currentConversationId = selectedConversation?.id; // <-- Replace with actual selected conversation ID
 
       try {
-        await createMessage(message, currentConversationId, token, file);
+        await createMessage(message, currentConversationId, token, activeAgent.link,file);
       
         // Refresh conversation list SO WE CAN GET the updated messages from the websocket using the dedicated conversation room
         const updated = await getConversationsByUser(userId, token);

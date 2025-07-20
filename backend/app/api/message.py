@@ -65,6 +65,7 @@ async def websocket_endpoint(websocket: WebSocket, room_name: str):
 async def create_message(
     content: str = Form(...),
     conversation_id: Optional[int] = Form(None),  # Now optional
+    link: str = Form(...),
     file: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -119,6 +120,7 @@ async def create_message(
     await generate_system_response(
         user_message=content,
         conversation_id=message.conversation_id, # Use the conversation_id from the saved message! to avoid creating a new conversation
+        agent_link=link,
         db=db,
         current_user=current_user,
     )
@@ -128,17 +130,18 @@ async def create_message(
 
 
 # Example system_response function
-async def generate_system_response(user_message: str, conversation_id: int, db: Session, current_user: User):
+async def generate_system_response(user_message: str, conversation_id: int, agent_link: str, db: Session, current_user: User):
     """
     Calls n8n to get a system response, saves it as a message, and emits it.
     """
 
     system_content = "This is a system-generated response based on the user message."
+    print(agent_link)
 
     # Call your n8n webhook or API to get the system response
     async with httpx.AsyncClient(timeout=20.0) as client:
         n8n_response = await client.post(
-            "https://n8n.srv793731.hstgr.cloud/webhook/friday",
+            agent_link,
             json={"message": user_message}
         )
 

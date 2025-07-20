@@ -294,7 +294,9 @@ const Workspace = () => {
   };
 
   return (
-    <div className={`min-h-screen overflow-y-auto ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    // <div className={`min-h-screen overflow-y-auto ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen w-full overflow-x-hidden overflow-y-auto ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+
       {/* Eleven lab widget */}
       {/* <div className="flex justify-center p-4 bg-white shadow-sm">
         <elevenlabs-convai agent-id="3AV2tYqySsT8uWSEV2ay"></elevenlabs-convai>
@@ -562,21 +564,19 @@ const Workspace = () => {
             </div>
             ) : (
               //  Placeholder for no messages
-              <div className="h-full flex flex-col items-center justify-center p-8">
+              <div className="h-full flex flex-col items-center justify-center p-4 sm:p-8 text-center w-full max-w-full overflow-hidden">
                 <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 border-4 relative overflow-hidden ${
                   isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
                 }`}>
                   {/* More discrete animated pulse rings with recording state */}
                   {recording ? (
                     <>
-                      {/* Subtle recording rings with reduced opacity */}
                       <div className="absolute inset-0 rounded-full animate-pulse bg-orange-500 opacity-20"></div>
                       <div className="absolute inset-2 rounded-full animate-pulse bg-orange-400 opacity-15 animation-delay-500"></div>
                       <div className="absolute inset-4 rounded-full animate-pulse bg-orange-300 opacity-10 animation-delay-1000"></div>
                     </>
                   ) : (
                     <>
-                      {/* Idle state rings */}
                       <div className={`absolute inset-0 rounded-full animate-pulse opacity-10 ${
                         isDarkMode ? 'bg-gray-600' : 'bg-gray-300'
                       }`}></div>
@@ -586,24 +586,20 @@ const Workspace = () => {
                     </>
                   )}
                   <Mic className={`w-12 h-12 relative z-10 transition-colors duration-300 ${
-                    recording 
-                      ? 'text-orange-500' 
-                      : isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                    recording ? 'text-orange-500' : isDarkMode ? 'text-gray-300' : 'text-gray-600'
                   }`} />
                 </div>
-                
+
                 <h2 className={`text-2xl font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{t("welcomeAiWorkspace")}</h2>
-                <p className={`mb-8 text-center max-w-md ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`mb-6 sm:mb-8 text-center w-full px-4 max-w-md ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   {recording ? t("listening") : t("startConversation")}
                 </p>
 
-                <div className="flex gap-4">
+                {/* <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center items-center">
                   <Button 
                     onClick={toggleRecording}
-                    className={`px-6 py-3 flex items-center gap-2 transition-all duration-300 ${
-                      recording 
-                        ? 'bg-red-500 text-white hover:bg-red-600' 
-                        : 'bg-orange-500 text-white hover:bg-orange-600'
+                    className={`w-full sm:w-auto px-6 py-3 flex items-center justify-center gap-2 transition-all duration-300 ${
+                      recording ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-orange-500 text-white hover:bg-orange-600'
                     }`}
                   >
                     <Mic className="w-4 h-4" />
@@ -611,18 +607,16 @@ const Workspace = () => {
                   </Button>
                   <Button 
                     variant="outline"
-                    className={`px-6 py-3 flex items-center gap-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white transition-all duration-300 ${
-                      isDarkMode 
-                        ? 'bg-gray-800 hover:bg-orange-500' 
-                        : 'bg-white hover:bg-orange-500'
+                    className={`w-full sm:w-auto px-6 py-3 flex items-center justify-center gap-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white transition-all duration-300 ${
+                      isDarkMode ? 'bg-gray-800 hover:bg-orange-500' : 'bg-white hover:bg-orange-500'
                     }`}
                   >
                     <Bot className="w-4 h-4" />
                     {t("typeMessage")}
                   </Button>
-                </div>
-                
+                </div> */}
               </div>
+
             )}
           </div>
 

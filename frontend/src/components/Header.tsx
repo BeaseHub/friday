@@ -102,7 +102,7 @@ const Header = () => {
         </div>
         
         <div className="flex items-center space-x-4">
-          <DropdownMenu>
+          {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative hover:bg-white/20 text-white">
                 <Bell className="h-5 w-5" />
@@ -133,13 +133,13 @@ const Header = () => {
                       {notif.message}
                     </div>
                     <div className="text-[10px] text-gray-400 mt-1 self-end text-right">
-                      {new Date(notif.time).toLocaleString()} {/* Or use date-fns format() */}
+                      {new Date(notif.time).toLocaleString()}
                     </div>
                   </DropdownMenuItem>
                 ))
               )}
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu> */}
 
           
           <DropdownMenu>

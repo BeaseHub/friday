@@ -15,7 +15,6 @@ const Index = () => {
   const [displayedText, setDisplayedText] = useState('');
   const [charIndex, setCharIndex] = useState(0);
   const dispatch = useAppDispatch();
-  const [userAgents, setUserAgents] = useState([]);
   const { t} = useTranslation();
 
   const animatedTexts = [
@@ -25,20 +24,6 @@ const Index = () => {
     t("heroTitle4")
   ];
 
-  useEffect(() => {
-    const fetchAgents = async () => {
-      try {
-        const userSubscriptions = await getActiveSubscriptionsByUser();
-        const userSubscription = userSubscriptions?.[0] || null;
-        setUserAgents(userSubscription?.agents || []);
-        console.log("User Agents:", userSubscription?.agents);
-      } catch (error) {
-        setUserAgents([]);
-      }
-    };
-
-    fetchAgents();
-  }, []);
 
   useEffect(() => {
     const currentText = animatedTexts[currentTextIndex];
@@ -61,7 +46,7 @@ const Index = () => {
   }, [charIndex, currentTextIndex]);
 
   const handleWorkspaceClick = () => {
-    if (isAuthenticated && userAgents.length > 0) {
+    if (isAuthenticated) {
       navigate('/workspace');
     } else {
       navigate('/explore');

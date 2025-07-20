@@ -10,11 +10,12 @@ import { useTranslation } from 'react-i18next';
 
 const Index = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated,user } = useAppSelector((state) => state.auth);
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [charIndex, setCharIndex] = useState(0);
   const dispatch = useAppDispatch();
+  const [userAgents, setUserAgents] = useState([]);
   const { t} = useTranslation();
 
   const animatedTexts = [
@@ -24,6 +25,22 @@ const Index = () => {
     t("heroTitle4")
   ];
 
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const userSubscriptions = await getActiveSubscriptionsByUser();
+        const userSubscription = userSubscriptions?.[0] || null;
+        setUserAgents(userSubscription?.agents || []);
+        console.log("User Agents:", userSubscription?.agents);
+      } catch (error) {
+        setUserAgents([]);
+      }
+    };
+
+    if (user) {
+      fetchAgents(); // 👈 Refetch when user updates
+    }
+  }, [user]);
 
   useEffect(() => {
     const currentText = animatedTexts[currentTextIndex];
@@ -46,7 +63,8 @@ const Index = () => {
   }, [charIndex, currentTextIndex]);
 
   const handleWorkspaceClick = () => {
-    if (isAuthenticated) {
+    console.log("user agents ",userAgents);
+    if (isAuthenticated && userAgents.length > 0) {
       navigate('/workspace');
     } else {
       navigate('/explore');

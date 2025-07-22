@@ -71,6 +71,16 @@ This document will guide you through setup, environment variables, migrations, a
    alembic upgrade head
    ```
 
+  
+4.  To run it locally, enter this command in the cmd
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+
+   if There is any problem when trying to run the migration, fixing might includes:
+   - deleting the venv file, then reinstalling it 
+   - remove every python file in the alembic/migration(del alembic\versions\*.py), and running alembic revision --autogenerate -m "Initial reset" and then alembic upgrade head
 ---
 
 ## 🔐 Environment Variables

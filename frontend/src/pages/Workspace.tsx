@@ -72,9 +72,12 @@ const Workspace = () => {
       const initials = parsed?.user?.initials ?? null;
       const fullName = parsed?.user?.firstName +" " + parsed?.user?.lastName;
       const userEmail = parsed?.user?.email ?? null;
-      return { userId, token, fullName, initials, userEmail };
+      const phoneNumber = parsed?.user?.phoneNumber ?? null;
+      const bio = parsed?.user?.bio ?? null;
+      const emailTemplate = parsed?.user?.emailTemplate ?? null;
+      return { userId, token, fullName, initials, userEmail, phoneNumber, bio, emailTemplate };
     } catch {
-      return { userId: null, token: null,fullName: null, initials: null, userEmail:null};
+      return { userId: null, token: null,fullName: null, initials: null, userEmail:null, phoneNumber: null, bio: null, emailTemplate: null };
     }
   };
 
@@ -304,7 +307,9 @@ const Workspace = () => {
       <div >
         <elevenlabs-convai 
           agent-id={activeAgent?.eleven_labs_id}
-          dynamic-variables={JSON.stringify({ user_id: getAuthUserAndToken().userId, user_email: getAuthUserAndToken().userEmail })}>
+          dynamic-variables={JSON.stringify({ user_id: getAuthUserAndToken().userId, user_email: getAuthUserAndToken().userEmail,
+            phone_number: getAuthUserAndToken().phoneNumber, user_bio: getAuthUserAndToken().bio, email_template: getAuthUserAndToken().emailTemplate
+           })}>
         </elevenlabs-convai>
       </div>
 

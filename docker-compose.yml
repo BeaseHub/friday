@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:3000/api}
+        - NODE_ENV=production
+    ports:
+      - "8080:80" # Mappage du port 8080 local vers le port 80 du conteneur
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    container_name: friday-frontend
+
+    # Configuration pour les logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Configuration réseau (optionnel pour développement local)
+    networks:
+      - friday-network
+
+networks:
+  friday-network:
+    driver: bridge

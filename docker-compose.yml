@@ -1,0 +1,43 @@
+services:
+  # Application FastAPI
+  app:
+    build: .
+    image: mrseck/friday-be:v0.0.2
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persister les uploads
+      - ./uploads:/app/uploads
+    environment:
+      - DATABASE_URL=postgresql://friday:friday@db:5432/friday
+      - JWT_SECRET_KEY=your-super-secret-jwt-key-change-this-in-production
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - CORS_ORIGINS=http://localhost:8080,http://localhost:3000
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - friday-network
+
+  # Base de données PostgreSQL
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=friday
+      - POSTGRES_USER=friday
+      - POSTGRES_PASSWORD=friday
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - friday-network
+
+volumes:
+  postgres_data:
+
+networks:
+  friday-network:
+    driver: bridge

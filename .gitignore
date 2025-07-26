@@ -1,0 +1,41 @@
+# Variables d'environnement
+.env
+.env.local
+.env.production
+
+# Environnement virtuel Python
+venv/
+env/
+.venv/
+
+# Fichiers Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.pytest_cache/
+
+# Base de données
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Uploads (optionnel - dépend de votre stratégie)
+# uploads/ 
